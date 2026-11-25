@@ -426,3 +426,56 @@ h1, h2, h3 { font-family: var(--f-titol); font-weight: 600; text-wrap: balance; 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* ---------- Capçalera B (logotip + Nom i Data amb pauta) ---------- */
+.capb { display: flex; justify-content: space-between; align-items: flex-start; height: 23mm; margin-bottom: 7mm; flex: none; }
+.capb-logo { height: 13mm; width: auto; display: block; }
+.capb-camps { display: flex; flex-direction: column; gap: 3mm; }
+.capb-camp { display: flex; align-items: center; justify-content: flex-end; gap: 3mm; }
+.capb-etiqueta { font: 400 14pt var(--f-fitxa); color: #737373; }
+.capb + .cos { padding-top: 0; }
+.imatge-bloc { flex: none; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.imatge-bloc img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.imatge-buida-full { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border: 0.4mm dashed #c8bcc0; border-radius: 3mm; color: #a0949a; font-size: 11pt; }
+.bloc-text { flex: none; font-family: var(--f-fitxa); color: #333; overflow: hidden; }
+.espai-dibuix { border-width: 0.5mm; border-radius: 4mm; }
+
+/* ---------- Dossiers del mes ---------- */
+.graella-mesos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.tria-mes {
+  display: flex; gap: 14px; align-items: center; text-decoration: none; color: var(--tinta);
+  background: var(--paper); border: 1px solid var(--linia); border-radius: var(--r); padding: 12px;
+  transition: border-color .18s, transform .18s;
+}
+.tria-mes:hover { border-color: var(--granat); transform: translateY(-1px); }
+.tria-mes.actual { border-color: var(--granat); box-shadow: inset 0 0 0 1px var(--granat); }
+.tria-mes .mini-full { width: 92px; }
+.mes-buit { width: 92px; height: 130px; flex: none; border: 1px dashed var(--linia-forta); border-radius: 3px; background: repeating-linear-gradient(180deg, transparent 0 18px, var(--linia) 18px 19px); }
+.tria-mes-text { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; min-width: 0; }
+.tria-mes-text strong { font-family: var(--f-titol); font-weight: 600; font-size: 20px; }
+.tria-mes-text span { color: var(--tinta-2); font-size: 14px; }
+.tria-mes-text .xip { color: #fff; }
+.capcalera-dossier { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.capcalera-dossier .subtitol { margin: 6px 0 0; }
+.llista-dossier { display: flex; flex-direction: column; gap: 10px; }
+.fitxa-dossier { display: flex; gap: 16px; align-items: center; background: var(--paper); border: 1px solid var(--linia); border-radius: var(--r); padding: 12px 14px; }
+.fitxa-dossier-num { width: 30px; height: 30px; flex: none; border-radius: 50%; background: var(--granat); color: #fff; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
+.fitxa-dossier-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+.fitxa-dossier h3 { font-size: 18px; }
+.fitxa-dossier h3 a { color: var(--tinta); text-decoration: none; }
+.fitxa-dossier h3 a:hover { color: var(--granat); text-decoration: underline; }
+.fitxa-dossier .etiquetes { align-items: center; }
+.grup-models { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
+.grup-models + .grup-models { border-top: 1px solid var(--linia); margin-top: 8px; padding-top: 18px; }
+.grup-models-cap h3 { font-size: 18px; }
+.grup-models-cap p { margin: 2px 0 0; color: var(--tinta-2); font-size: 15px; max-width: 46em; }
+.camp textarea { border: 1px solid var(--linia-forta); border-radius: 8px; padding: 10px 12px; background: var(--paper); width: 100%; resize: vertical; font: inherit; }
+.camp textarea:focus { border-color: var(--granat); }
+.camps-sanefa { display: flex; flex-direction: column; gap: 14px; }
+.full-figura { margin: 0; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.full-figura figcaption { font-size: 13px; font-weight: 600; color: var(--tinta-2); align-self: flex-start; }
+@media (max-width: 640px) {
+  .fitxa-dossier { flex-wrap: wrap; }
+  .fitxa-dossier .mini-full { width: 72px !important; height: 102px !important; }
+  .fitxa-dossier .mini-full > .full { transform: scale(0.0907) !important; }
+}

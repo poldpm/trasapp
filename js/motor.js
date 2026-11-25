@@ -21,10 +21,13 @@ window.AT = window.AT || {};
           document.fonts.load('700 16px Nunito'),
           document.fonts.load('400 16px Nunito'),
           document.fonts.load('300 16px Nunito', 'ABC123'),
+          document.fonts.load('300 100px Raleway', 'ABCÇ123'),
+          document.fonts.load('100px "Raleway Dots"', 'ABCÇ123'),
           document.fonts.load('500 16px Poppins', '0123456789')
         ]);
       } catch (e) { /* sense xarxa: es fan servir les tipografies de recanvi */ }
       if (AT.paraulaMetrica) AT.paraulaMetrica();
+      if (AT.blocsMetrica) AT.blocsMetrica();
       return document.fonts.check('700 16px "Bricolage Grotesque"');
     }
   };
@@ -429,12 +432,15 @@ window.AT = window.AT || {};
   /* ---------- Paginació ---------- */
   const ENUNCIAT = 8;      // mm que ocupa un enunciat (12 pt + espai)
   const ENTRE_BLOCS = 5;   // mm entre blocs
-  const CAPCALERA = 31;    // mm de la capçalera oficial + espai inferior
 
   function motorDe(bloc, fitxa, W) {
     if (bloc.tipus === 'fila' || bloc.tipus === 'paraula') return AT.motor.fila(bloc, fitxa, W);
     if (bloc.tipus === 'grafomotricitat') return AT.motor.grafomotricitat(bloc, fitxa.curs, W);
-    return null;
+    if (bloc.tipus === 'caixa') return AT.motor.caixa(bloc, fitxa, W);
+    if (bloc.tipus === 'text') return AT.motor.text(bloc, fitxa, W);
+    if (bloc.tipus === 'sanefa') return AT.motor.sanefa(bloc, fitxa, W);
+    if (bloc.tipus === 'pauta') return AT.motor.pauta(bloc, fitxa, W);
+    return null; // espai i imatge: els col·loca la paginació
   }
 
   AT.motor.pagina = function (fitxa) {
@@ -443,7 +449,7 @@ window.AT = window.AT || {};
     const H = F.alcada - F.marges.dalt - F.marges.baix;
     const avisos = [];
     const pagines = [];
-    const nova = () => { const p = { cap: pagines.length === 0 && fitxa.capcalera !== false ? H - CAPCALERA : H, usat: 0, items: [] }; pagines.push(p); return p; };
+    const nova = () => { const p = { cap: pagines.length === 0 && fitxa.capcalera !== false ? H - AT.motor.ALCADA_CAPCALERA : H, usat: 0, items: [] }; pagines.push(p); return p; };
     let pag = nova();
 
     /* Mostra de les lletres, just sota la capçalera */
@@ -469,12 +475,12 @@ window.AT = window.AT || {};
       if (m && m.solaEnPagina) pag.tancada = true;
       const sep = pag.items.length ? ENTRE_BLOCS : 0;
       const enun = bloc.enunciat && bloc.enunciat.trim() ? ENUNCIAT : 0;
-      if (bloc.tipus === 'espai') {
+      if (bloc.tipus === 'espai' || bloc.tipus === 'imatge') {
         const alt = bloc.alcada === 'auto' ? 30 : Number(bloc.alcada) || 60;
         if (pag.usat + sep + enun + alt > pag.cap + 0.01) pag = nova();
         const s0 = pag.items.length ? ENTRE_BLOCS : 0;
         pag.items.push({ tipus: 'enunciat', bloc, alt: s0 + enun, sep: s0 });
-        pag.items.push({ tipus: 'espai', bloc, alt, auto: bloc.alcada === 'auto' });
+        pag.items.push({ tipus: bloc.tipus, bloc, alt, auto: bloc.alcada === 'auto' });
         pag.usat += s0 + enun + alt;
         return;
       }
@@ -516,8 +522,13 @@ window.AT = window.AT || {};
           }
         }
       }
-      const espaiAuto = p.items.find(it => it.tipus === 'espai' && it.auto);
-      if (espaiAuto) { espaiAuto.alt += Math.max(0, p.cap - p.usat - 0.5); p.usat = p.cap; }
+      /* els espais i dibuixos «Omple el full» es reparteixen l'espai que sobra */
+      const omplir = p.items.filter(it => (it.tipus === 'espai' || it.tipus === 'imatge') && it.auto);
+      if (omplir.length) {
+        const extra = Math.max(0, p.cap - p.usat - 0.5) / omplir.length;
+        omplir.forEach(it => { it.alt += extra; });
+        p.usat = p.cap;
+      }
     });
 
     /* Índex de cada fila dins del seu bloc (per a la progressió d'ajuda) */
@@ -539,25 +550,7 @@ window.AT = window.AT || {};
   };
 
   /* ---------- Fulls (DOM) ---------- */
-  function capcalera(fitxa) {
-    const curs = AT.config.cursos[fitxa.curs];
-    const logo = AT.LOGO_ESCOLA;
-    return h('table', { class: 'capcalera' },
-      h('colgroup', null, h('col'), h('col'), h('col'), h('col')),
-      h('tr', null,
-        h('td', { colspan: 3, class: 'cap-nom' }, h('b', null, 'Nom i Cognoms:')),
-        h('td', { class: 'cap-data' }, h('b', null, 'Data:'))),
-      h('tr', { class: 'cap-separador' }, h('td', { colspan: 4 })),
-      h('tr', null,
-        h('td', { class: 'cap-logo' }, logo
-          ? h('img', { src: logo, alt: 'Logotip de l’escola' })
-          : h('span', { class: 'nomes-pantalla logo-buit' }, 'Logo')),
-        h('td', { colspan: 2, class: 'cap-titol' }, fitxa.titol || 'TÍTOL'),
-        h('td', { class: 'cap-curs' }, h('b', null, curs ? curs.nom : '')))
-    );
-  }
-
-  AT.motor.fulls = function (fitxa) {
+  function fullsSimple(fitxa, primerNum) {
     const res = AT.motor.pagina(fitxa);
     const F = AT.config.full;
     const fulls = res.pagines.map((p, pi) => {
@@ -568,11 +561,11 @@ window.AT = window.AT || {};
           padding: `${F.marges.dalt}mm ${F.marges.dreta}mm ${F.marges.baix}mm ${F.marges.esquerra}mm`
         }
       });
-      if (pi === 0 && fitxa.capcalera !== false) full.append(capcalera(fitxa));
+      if (pi === 0 && fitxa.capcalera !== false) full.append(AT.motor.capcalera(fitxa));
       const cos = h('div', { class: 'cos' });
       p.items.forEach(it => {
         if (it.tipus === 'enunciat') {
-          if (!it.bloc.enunciat || !it.bloc.enunciat.trim()) { if (it.sep) cos.append(h('div', { style: { height: it.sep + 'mm' } })); return; }
+          if (!it.bloc.enunciat || !it.bloc.enunciat.trim()) { if (it.sep) cos.append(h('div', { style: { height: it.sep + 'mm', flex: 'none' } })); return; }
           cos.append(h('p', { class: 'enunciat', style: { height: it.alt + 'mm', paddingTop: it.sep + 'mm' } }, it.bloc.enunciat));
         } else if (it.tipus === 'fila') {
           cos.append(res.motors[it.bi].fila(it.r, it.N));
@@ -581,12 +574,32 @@ window.AT = window.AT || {};
           cos.append(it.el);
         } else if (it.tipus === 'espai') {
           cos.append(h('div', { class: 'espai-dibuix', style: { height: it.alt + 'mm' } }));
+        } else if (it.tipus === 'imatge') {
+          cos.append(h('div', { class: 'imatge-bloc', style: { height: it.alt + 'mm' } },
+            it.bloc.src ? h('img', { src: it.bloc.src, alt: '' }) : h('span', { class: 'nomes-pantalla imatge-buida-full' }, 'Aquí anirà el dibuix. Puja’l des de l’editor.')));
         }
       });
       full.append(cos);
-      full.append(h('div', { class: 'num-pagina', style: { bottom: F.peu + 'mm', right: F.marges.dreta + 'mm' } }, String(pi + 1)));
+      full.append(h('div', { class: 'num-pagina', style: { bottom: F.peu + 'mm', right: F.marges.dreta + 'mm' } }, String(primerNum + pi)));
       return full;
     });
     return { fulls, avisos: res.avisos, ocupacio: res.ocupacio };
+  }
+
+  /* Una fitxa normal fa els seus fulls; una de composta (portada, dita) en fa un per versió */
+  AT.motor.fulls = function (fitxa) {
+    if (!fitxa.compost || !AT.compostos[fitxa.compost]) return fullsSimple(fitxa, 1);
+    const total = { fulls: [], avisos: [], ocupacio: [], versions: [] };
+    AT.compostos.versionsActives(fitxa).forEach(([v, nom]) => {
+      const g = AT.compostos[fitxa.compost].blocs(fitxa, v);
+      const virtual = Object.assign({}, fitxa, { blocs: g.blocs, majuscules: g.majuscules, compost: null, capcalera: true });
+      const r = fullsSimple(virtual, total.fulls.length + 1);
+      r.fulls.forEach(f => f.dataset.versio = nom);
+      total.fulls.push(...r.fulls);
+      total.ocupacio.push(...r.ocupacio);
+      r.avisos.filter(a => !/queda (mig buit|buit)/.test(a)).forEach(a => total.avisos.push(`${nom}: ${a}`));
+      total.versions.push(nom);
+    });
+    return total;
   };
 })();

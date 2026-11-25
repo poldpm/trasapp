@@ -56,7 +56,8 @@ window.AT = window.AT || {};
         h('h3', null, h('a', { href: '#fitxa-' + f.id }, f.titol || 'Sense títol')),
         h('p', { class: 'etiquetes' },
           h('span', { class: 'xip' }, curs ? curs.curt : '?'),
-          h('span', { class: 'xip xip-suau' }, area ? area.nom : '')),
+          h('span', { class: 'xip xip-suau' }, area ? area.nom : ''),
+          f.mes ? h('span', { class: 'xip xip-suau' }, AT.nomMes(f.mes)) : null),
         h('p', { class: 'meta' }, 'Modificada ' + AT.data(f.modificat)),
         h('div', { class: 'accions-fitxa' },
           h('button', { class: 'boto-icona', type: 'button', title: 'Duplica', 'aria-label': 'Duplica ' + f.titol, onclick: () => { AT.store.duplica(f.id); AT.avis('Fitxa duplicada'); onCanvi(); } }, icona('copia', 18)),
@@ -105,73 +106,92 @@ window.AT = window.AT || {};
   /* ---------- Curs: cal·ligrafia o grafomotricitat ---------- */
   AT.vistes.curs = function (cursId) {
     const c = C.cursos[cursId];
-    const mostraCal = () => {
-      const fitxa = { curs: cursId, lletres: [c.mostres.lletra], blocs: [] };
-      const m = AT.motor.fila(Object.assign(AT.clona(C.blocs.fila), { id: 'm', columnes: ['model', 'puntets'], mida: 'petita' }), fitxa, 120);
-      const el = m.fila(0, 1); el.setAttribute('width', '100%'); el.removeAttribute('height'); return el;
-    };
-    const mostraGrafo = () => {
-      const b = Object.assign(AT.clona(C.blocs.grafomotricitat), { id: 'g', forma: 'ones', ajuda: 'resseguir', mida: 'petita' });
-      const m = AT.motor.grafomotricitat(b, cursId, 120);
-      const el = m.fila(0, 1); el.setAttribute('width', '100%'); el.removeAttribute('height'); return el;
-    };
+    const actual = AT.mesActual();
     return h('div', { class: 'vista' },
       molles([{ ruta: 'inici', text: 'Inici' }, { text: c.nom }]),
       h('h1', { class: 'titol-vista' }, c.nom),
-      h('p', { class: 'subtitol' }, 'Quin tipus de fitxa vols preparar?'),
-      h('div', { class: 'graella-arees' },
-        [['caligrafia', mostraCal], ['grafomotricitat', mostraGrafo]].map(([id, mostra]) => {
-          const a = C.arees[id];
-          return h('a', { class: 'tria-area', href: `#${cursId}-${id}` },
-            h('span', { class: 'tria-area-mostra' }, mostra()),
-            h('span', { class: 'tria-area-text' },
-              h('strong', null, a.nom),
-              h('span', null, a.descripcio)),
-            h('span', { class: 'tria-area-cta' }, 'Prepara una fitxa', icona('endavant', 18)));
-        })),
-      h('section', { class: 'seccio' },
-        h('h2', { class: 'titol-seccio' }, 'Fitxes de ' + c.curt),
-        llistaFitxes(f => f.curs === cursId, 'Encara no hi ha fitxes de ' + c.curt + '.'))
-    );
+      h('p', { class: 'subtitol' }, 'Tria el mes. Cada mes és un dossier amb la portada, la dita, les lletres, la grafomotricitat i els extres.'),
+      h('div', { class: 'graella-mesos' }, C.mesos.map(([id, nom]) => {
+        const fs = AT.store.dossier(cursId, id);
+        return h('a', { class: 'tria-mes' + (id === actual ? ' actual' : ''), href: `#${cursId}-${id}` },
+          fs.length ? miniatura(fs[0], 92) : h('span', { class: 'mes-buit', 'aria-hidden': 'true' }),
+          h('span', { class: 'tria-mes-text' },
+            h('strong', null, nom),
+            h('span', null, fs.length ? (fs.length === 1 ? '1 fitxa' : fs.length + ' fitxes') : 'Encara buit'),
+            id === actual ? h('span', { class: 'xip' }, 'Aquest mes') : null));
+      })));
   };
 
-  /* ---------- Àrea: models de partida ---------- */
-  AT.vistes.area = function (cursId, areaId) {
-    const c = C.cursos[cursId], a = C.arees[areaId];
-    const models = AT.models[areaId];
+  /* Galeria de models per afegir al dossier */
+  function galeriaModels(cursId, mesId) {
+    const c = C.cursos[cursId];
+    return Object.values(C.arees).map(a => h('section', { class: 'grup-models' },
+      h('div', { class: 'grup-models-cap' }, h('h3', null, a.nom), h('p', null, a.descripcio)),
+      h('div', { class: 'graella-models' }, (AT.models[a.id] || []).map(m => {
+        const base = m.crea(c, AT.nomMes(mesId));
+        const prova = {
+          curs: cursId, area: a.id, titol: base.titol || AT.titolLletres(base.lletres || []), capcalera: true,
+          lletres: base.lletres, mostra: Object.assign({ visible: true, estil: 'fletxes', mida: 'gran' }, base.mostra || {}),
+          compost: base.compost, dades: base.dades && Object.assign({}, base.dades, { dita: base.dades.dita || 'Exemple de dita per veure com queda.' }),
+          blocs: (base.blocs || []).map((b, i) => Object.assign(AT.clona(C.blocs[b.tipus]), b, { id: 'p' + i }))
+        };
+        return h('button', {
+          class: 'tria-model', type: 'button',
+          onclick: () => { const f = AT.store.nova(cursId, a.id, m.id, mesId); location.hash = 'fitxa-' + f.id; }
+        },
+          miniatura(prova, 130),
+          h('span', { class: 'tria-model-text' }, h('strong', null, m.nom), h('span', null, m.text)));
+      }))));
+  }
+
+  /* ---------- Dossier del mes ---------- */
+  AT.vistes.dossier = function (cursId, mesId) {
+    const c = C.cursos[cursId], nomMes = AT.nomMes(mesId);
+    const llista = h('div', { class: 'llista-dossier' });
+    const pinta = () => {
+      const fs = AT.store.dossier(cursId, mesId);
+      llista.replaceChildren(...(fs.length ? fs.map((f, i) => {
+        const n = AT.motor.fulls(f).fulls.length;
+        const confirma = h('div', { class: 'confirma', hidden: true },
+          h('span', null, 'Vols esborrar aquesta fitxa?'),
+          h('button', { class: 'boto boto-perill boto-petit', type: 'button', onclick: () => { AT.store.esborra(f.id); AT.avis('Fitxa esborrada'); pinta(); } }, 'Esborra'),
+          h('button', { class: 'boto boto-petit', type: 'button', onclick: () => { confirma.hidden = true; } }, 'Cancel·la'));
+        return h('article', { class: 'fitxa-dossier' },
+          h('span', { class: 'fitxa-dossier-num' }, String(i + 1)),
+          h('a', { href: '#fitxa-' + f.id, 'aria-label': 'Obre ' + f.titol }, miniatura(f, 96)),
+          h('div', { class: 'fitxa-dossier-text' },
+            h('h3', null, h('a', { href: '#fitxa-' + f.id }, f.titol || 'Sense títol')),
+            h('p', { class: 'etiquetes' }, h('span', { class: 'xip xip-suau' }, (C.arees[f.area] || {}).nom || ''), h('span', { class: 'meta' }, n === 1 ? '1 full' : n + ' fulls')),
+            h('div', { class: 'accions-fitxa' },
+              h('button', { class: 'boto-icona', type: 'button', title: 'Puja', 'aria-label': 'Puja ' + f.titol, disabled: i === 0, onclick: () => { AT.store.mouEnDossier(f.id, -1); pinta(); } }, icona('amunt', 18)),
+              h('button', { class: 'boto-icona', type: 'button', title: 'Baixa', 'aria-label': 'Baixa ' + f.titol, disabled: i === fs.length - 1, onclick: () => { AT.store.mouEnDossier(f.id, 1); pinta(); } }, icona('avall', 18)),
+              h('button', { class: 'boto-icona', type: 'button', title: 'Duplica', 'aria-label': 'Duplica ' + f.titol, onclick: () => { AT.store.duplica(f.id); AT.avis('Fitxa duplicada'); pinta(); } }, icona('copia', 18)),
+              h('button', { class: 'boto-icona', type: 'button', title: 'Esborra', 'aria-label': 'Esborra ' + f.titol, onclick: () => { confirma.hidden = false; } }, icona('paperera', 18))),
+            confirma));
+      }) : [h('p', { class: 'buit' }, `El dossier de ${nomMes.toLowerCase()} encara és buit. Afegeix-hi la primera fitxa a sota.`)]));
+      boto.disabled = !fs.length;
+    };
+    const boto = h('button', { type: 'button', class: 'boto boto-primari', onclick: () => AT.imprimeixDossier(cursId, mesId) }, icona('impressora', 18), 'Imprimeix el dossier');
+    pinta();
     return h('div', { class: 'vista' },
-      molles([{ ruta: 'inici', text: 'Inici' }, { ruta: cursId, text: c.nom }, { text: a.nom }]),
-      h('h1', { class: 'titol-vista' }, a.nom + ' · ' + c.curt),
-      h('p', { class: 'subtitol' }, 'Tria com vols començar. Després ho podràs canviar tot.'),
-      h('div', { class: 'graella-models' },
-        models.map(m => {
-          const base = m.crea(c);
-          const prova = {
-            curs: cursId, area: areaId, titol: base.titol || AT.titolLletres(base.lletres || []), capcalera: true,
-            lletres: base.lletres, mostra: Object.assign({ visible: true, estil: 'fletxes', mida: 'gran' }, base.mostra || {}),
-            blocs: base.blocs.map((b, i) => Object.assign(AT.clona(C.blocs[b.tipus]), b, { id: 'p' + i }))
-          };
-          return h('button', {
-            class: 'tria-model', type: 'button',
-            onclick: () => { const f = AT.store.nova(cursId, areaId, m.id); location.hash = 'fitxa-' + f.id; }
-          },
-            miniatura(prova, 150),
-            h('span', { class: 'tria-model-text' }, h('strong', null, m.nom), h('span', null, m.text)));
-        })),
+      molles([{ ruta: 'inici', text: 'Inici' }, { ruta: cursId, text: c.nom }, { text: nomMes }]),
+      h('div', { class: 'capcalera-dossier' },
+        h('div', null, h('h1', { class: 'titol-vista' }, `${nomMes} · ${c.curt}`), h('p', { class: 'subtitol' }, 'Les fitxes del dossier, en l’ordre en què s’imprimeixen.')),
+        boto),
+      llista,
       h('section', { class: 'seccio' },
-        h('h2', { class: 'titol-seccio' }, 'Fitxes de ' + a.nom.toLowerCase() + ' de ' + c.curt),
-        llistaFitxes(f => f.curs === cursId && f.area === areaId, 'Encara no n’hi ha cap.'))
-    );
+        h('h2', { class: 'titol-seccio' }, 'Afegeix una fitxa'),
+        galeriaModels(cursId, mesId)));
   };
 
   /* ---------- Totes les fitxes ---------- */
   AT.vistes.fitxes = function () {
-    const estat = { curs: 'tots', area: 'totes', cerca: '' };
+    const estat = { curs: 'tots', mes: 'tots', cerca: '' };
     const zona = h('div');
     const pinta = () => {
       zona.replaceChildren(llistaFitxes(f =>
         (estat.curs === 'tots' || f.curs === estat.curs) &&
-        (estat.area === 'totes' || f.area === estat.area) &&
+        (estat.mes === 'tots' || f.mes === estat.mes) &&
         (!estat.cerca || (f.titol || '').toLowerCase().includes(estat.cerca.toLowerCase())),
         'Cap fitxa no coincideix amb el filtre.'));
     };
@@ -187,7 +207,9 @@ window.AT = window.AT || {};
       h('h1', { class: 'titol-vista' }, 'Fitxes desades'),
       h('div', { class: 'barra-filtres' },
         filtre('Curs', [['tots', 'Tots els cursos'], ['primer', '1r'], ['segon', '2n']], 'curs'),
-        filtre('Tipus', [['totes', 'Totes'], ['caligrafia', 'Cal·ligrafia'], ['grafomotricitat', 'Grafomotricitat']], 'area'),
+        h('label', { class: 'cerca' }, h('span', { class: 'sr' }, 'Mes'),
+          h('select', { id: 'filtre-mes', onchange: e => { estat.mes = e.target.value; pinta(); } },
+            h('option', { value: 'tots' }, 'Tots els mesos'), C.mesos.map(([id, nom]) => h('option', { value: id }, nom)))),
         h('label', { class: 'cerca' }, h('span', { class: 'sr' }, 'Cerca per títol'),
           h('input', { type: 'search', id: 'cerca-fitxes', placeholder: 'Cerca per títol', oninput: e => { estat.cerca = e.target.value; pinta(); } }))),
       zona);

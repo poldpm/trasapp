@@ -43,12 +43,24 @@ window.AT = window.AT || {};
       b.columnes = b.ajuda === 'model' ? ['model', 'punts'] : b.ajuda === 'escola' ? ['model', 'gris', 'punts'] : ['model', b.estil === 'gris' ? 'gris' : 'puntets'];
       if (b.fletxes) b.columnes[0] = 'fletxes';
     });
+    if (!f.mes) {
+      const ids = ['gener', 'febrer', 'marc', 'abril', 'maig', 'juny', 'juliol', 'agost', 'setembre', 'octubre', 'novembre', 'desembre'];
+      const m = ids[new Date(f.creat || Date.now()).getMonth()];
+      f.mes = (m === 'juliol' || m === 'agost') ? 'setembre' : m;
+    }
+    if (!f.ordre) f.ordre = f.creat || 1;
     if (f.area === 'caligrafia' && !f.lletres) {
       f.lletres = [...new Set(f.blocs.filter(b => b.tipus === 'fila').map(b => b.lletra))].slice(0, 6);
       if (!f.lletres.length) f.lletres = ['a'];
       f.mostra = { visible: false, estil: 'fletxes', mida: 'gran' };
     }
   });
+
+  AT.mesActual = () => {
+    const ids = ['gener', 'febrer', 'marc', 'abril', 'maig', 'juny', 'setembre', 'setembre', 'setembre', 'octubre', 'novembre', 'desembre'];
+    return ids[new Date().getMonth()];
+  };
+  AT.nomMes = id => (AT.config.mesos.find(m => m[0] === id) || [id, id])[1];
 
   AT.titolLletres = ll => (ll.length === 1 ? 'La lletra ' : 'Lletres ') + ll.join(' - ');
 
@@ -75,25 +87,44 @@ window.AT = window.AT || {};
     },
 
     /* Crea una fitxa nova a partir d'un model */
-    nova(curs, area, modelId) {
+    nova(curs, area, modelId, mes) {
       const c = AT.config.cursos[curs];
+      const mesId = mes || AT.mesActual();
+      const nomMes = (AT.config.mesos.find(m => m[0] === mesId) || ['', 'Setembre'])[1];
       const model = (AT.models[area] || []).find(m => m.id === modelId) || AT.models[area][0];
-      const base = model.crea(c);
+      const base = model.crea(c, nomMes);
       const lletres = base.lletres || null;
+      const ordre = Math.max(0, ...dades.fitxes.filter(f => f.curs === curs && f.mes === mesId && !f.esborrany).map(f => f.ordre || 0)) + 1;
       const fitxa = {
-        id: AT.uid(), curs, area,
+        id: AT.uid(), curs, area, mes: mesId, ordre,
         titol: base.titol || (lletres ? AT.titolLletres(lletres) : 'Art del traç'),
         titolAuto: !base.titol && !!lletres,
         lletres: lletres || undefined,
         mostra: lletres ? Object.assign({ visible: true, estil: 'fletxes', mida: 'gran' }, base.mostra || {}) : undefined,
+        compost: base.compost || undefined,
+        dades: base.dades ? AT.clona(base.dades) : undefined,
         capcalera: true,
-        blocs: base.blocs.map(b => Object.assign(AT.clona(AT.config.blocs[b.tipus]), b, { id: AT.uid() })),
+        blocs: (base.blocs || []).map(b => Object.assign(AT.clona(AT.config.blocs[b.tipus]), b, { id: AT.uid() })),
         creat: Date.now(), modificat: Date.now(),
         esborrany: true // passa a false amb el primer canvi
       };
       dades.fitxes.push(fitxa);
       escriu();
       return fitxa;
+    },
+
+    /* Fitxes d'un dossier (curs + mes), en l'ordre del dossier */
+    dossier(curs, mes) {
+      return dades.fitxes.filter(f => f.curs === curs && f.mes === mes && !f.esborrany).sort((a, b) => (a.ordre || 0) - (b.ordre || 0) || a.creat - b.creat);
+    },
+    mouEnDossier(id, d) {
+      const f = this.fitxa(id); if (!f) return;
+      const llista = this.dossier(f.curs, f.mes);
+      llista.forEach((x, i) => { x.ordre = i + 1; });
+      const i = llista.indexOf(f), j = i + d;
+      if (j < 0 || j >= llista.length) return;
+      [llista[i].ordre, llista[j].ordre] = [llista[j].ordre, llista[i].ordre];
+      escriu();
     },
 
     duplica(id) {
@@ -105,6 +136,7 @@ window.AT = window.AT || {};
       c.creat = c.modificat = Date.now();
       c.esborrany = false;
       c.blocs.forEach(b => { b.id = AT.uid(); });
+      c.ordre = Math.max(0, ...dades.fitxes.filter(f => f.curs === c.curs && f.mes === c.mes).map(f => f.ordre || 0)) + 1;
       dades.fitxes.push(c);
       escriu();
       return c;

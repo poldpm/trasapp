@@ -4,7 +4,7 @@
 window.AT = window.AT || {};
 
 AT.config = {
-  versio: '0.4',
+  versio: '0.5',
 
   /* Versió de la q: 'q' (proposta de la directora) o 'q_cua' (la q amb cua).
      Pendent de decisió de l'escola: de moment, la de la directora. */
@@ -21,13 +21,13 @@ AT.config = {
   /* Cursos. Les mides es donen en mil·límetres:
      - caligrafia: 1 unitat de pauta (distància entre dues línies de la pauta Montessori).
        «gran» = 14,26 mm, la mida de la plantilla de Canva de l'escola (53,9 px en un A4 de 794 px).
-       «mitjana» i «petita» són propostes per validar.
+       «mitjana», «petita» i «mini» són propostes per validar («mini» és per a textos com l'endevinalla).
      - grafomotricitat: alçada del traç */
   cursos: {
     primer: {
       id: 'primer', curt: '1r', nom: '1r de primària', ordinal: 'Primer',
       mides: {
-        caligrafia: { gran: 14.26, mitjana: 11, petita: 8.5 },
+        caligrafia: { gran: 14.26, mitjana: 11, petita: 8.5, mini: 4.5 },
         grafomotricitat: { gran: 24, mitjana: 18, petita: 13 }
       },
       mostres: { lletra: 'a', segona: 'b', paraula: 'ala' }
@@ -35,22 +35,27 @@ AT.config = {
     segon: {
       id: 'segon', curt: '2n', nom: '2n de primària', ordinal: 'Segon',
       mides: {
-        caligrafia: { gran: 14.26, mitjana: 11, petita: 8.5 },
+        caligrafia: { gran: 14.26, mitjana: 11, petita: 8.5, mini: 4.5 },
         grafomotricitat: { gran: 18, mitjana: 14, petita: 10 }
       },
       mostres: { lletra: 'a', segona: 'b', paraula: 'ala' }
     }
   },
 
+  /* Mesos del curs (cada mes és un dossier) */
+  mesos: [
+    ['setembre', 'Setembre'], ['octubre', 'Octubre'], ['novembre', 'Novembre'], ['desembre', 'Desembre'],
+    ['gener', 'Gener'], ['febrer', 'Febrer'], ['marc', 'Març'], ['abril', 'Abril'], ['maig', 'Maig'], ['juny', 'Juny']
+  ],
+
+  /* Tipus de fitxa que es poden afegir a un dossier, en aquest ordre */
   arees: {
-    caligrafia: {
-      id: 'caligrafia', nom: 'Cal·ligrafia',
-      descripcio: 'Les lletres de l’escola sobre pauta Montessori: model, per resseguir, ordre del traç i punts d’inici i final.'
-    },
-    grafomotricitat: {
-      id: 'grafomotricitat', nom: 'Grafomotricitat',
-      descripcio: 'Traços de preescriptura: ones, ponts, ziga-zagues, bucles i camins, amb punt d’inici.'
-    }
+    portada: { id: 'portada', nom: 'Portada del mes', descripcio: 'El mes, la dita, un dibuix i una sanefa. Surt en totes les versions: Lligada, Pal, PI i ⭐.' },
+    dita: { id: 'dita', nom: 'Dita', descripcio: 'La dita en caixes de pauta, per resseguir o copiar, en lligada i en pal.' },
+    endevinalla: { id: 'endevinalla', nom: 'Endevinalla', descripcio: 'L’endevinalla per resseguir, pautes per copiar-la i un espai per dibuixar la resposta.' },
+    caligrafia: { id: 'caligrafia', nom: 'Lletres', descripcio: 'Les lletres de l’escola sobre pauta Montessori: model, puntets, ordre del traç i punts d’inici i final.' },
+    grafomotricitat: { id: 'grafomotricitat', nom: 'Grafomotricitat', descripcio: 'Traços de preescriptura: ones, ponts, ziga-zagues, bucles i camins.' },
+    extres: { id: 'extres', nom: 'Full lliure', descripcio: 'Un full amb la capçalera i un dibuix gran: una mandala, un dibuix per pintar…' }
   },
 
   /* Valors per defecte de cada tipus de bloc */
@@ -69,7 +74,12 @@ AT.config = {
     },
     espai: {
       tipus: 'espai', enunciat: 'Dibuixa.', alcada: 60
-    }
+    },
+    caixa: { tipus: 'caixa', text: '', lletra: 'lligada', estil: 'puntets', mida: 'mitjana', amplada: 'plena', pauta: true },
+    text: { tipus: 'text', text: '', midaText: 14, negreta: false, alineacio: 'left' },
+    imatge: { tipus: 'imatge', src: null, alcada: 'auto' },
+    sanefa: { tipus: 'sanefa', modeSanefa: 'forma', forma: 'merlets', imatge: null, model: 2, resta: 'puntets', mida: 'gran' },
+    pauta: { tipus: 'pauta', files: 2, mida: 'mitjana' }
   }
 };
 
@@ -77,6 +87,55 @@ AT.config = {
 AT.models = {
   /* Fitxes de cal·ligrafia: «lletres» són les lletres que es treballen; la mostra les ensenya
      sota la capçalera i les files hi fan referència (@0, @1…), així tota la fitxa canvia si canvien. */
+  portada: [
+    {
+      id: 'portada', nom: 'Portada del mes',
+      text: 'Escriu el mes i la dita, puja el dibuix i tria la sanefa. Surten totes les versions.',
+      crea: (c, mes) => ({
+        titol: 'Portada ' + mes.toLowerCase(), compost: 'portada',
+        dades: { mes, dita: '', estil: 'puntets', imatge: null,
+          sanefa: { modeSanefa: 'forma', forma: 'merlets', model: 2, resta: 'puntets' },
+          versions: { lligada: true, pal: true, pi: true, estrella: false } }
+      })
+    }
+  ],
+  dita: [
+    {
+      id: 'dita', nom: 'Dita',
+      text: 'La dita en lligada i en pal, amb caixes buides per copiar-la i sanefa.',
+      crea: (c, mes) => ({
+        titol: 'Dita ' + mes.toLowerCase(), compost: 'dita',
+        dades: { titol: 'Dita', dita: '', estil: 'puntets', caixesBuides: 2, imatge: null,
+          sanefa: { modeSanefa: 'forma', forma: 'ones', model: 2, resta: 'puntets' },
+          versions: { lligada: true, pal: true } }
+      })
+    }
+  ],
+  endevinalla: [
+    {
+      id: 'endevinalla', nom: 'Endevinalla',
+      text: 'Títol, l’endevinalla per resseguir amb pautes per copiar-la i «Dibuixa què és».',
+      crea: (c, mes) => ({
+        titol: 'Endevinalla ' + mes.toLowerCase(),
+        blocs: [
+          { tipus: 'text', text: 'Endevinalla:', midaText: 16 },
+          { tipus: 'paraula', text: 'Una mena de patata', columnes: ['puntets'], files: 1, mida: 'mini' },
+          { tipus: 'pauta', files: 2, mida: 'mini' },
+          { tipus: 'paraula', text: 'de color de pastanaga.', columnes: ['puntets'], files: 1, mida: 'mini' },
+          { tipus: 'pauta', files: 2, mida: 'mini' },
+          { tipus: 'text', text: 'Dibuixa què és:', midaText: 16 },
+          { tipus: 'espai', enunciat: '', alcada: 'auto' }
+        ]
+      })
+    }
+  ],
+  extres: [
+    {
+      id: 'full-lliure', nom: 'Full lliure',
+      text: 'La capçalera i un dibuix gran a tota la pàgina.',
+      crea: (c, mes) => ({ titol: 'Full lliure ' + mes.toLowerCase(), blocs: [{ tipus: 'imatge', src: null, alcada: 'auto' }] })
+    }
+  ],
   caligrafia: [
     {
       id: 'lletra', nom: 'Una lletra',

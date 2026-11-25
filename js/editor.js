@@ -32,7 +32,10 @@ window.AT = window.AT || {};
   }
   const opcionsFiles = [['auto', 'Omple el full'], ...Array.from({ length: 12 }, (_, i) => [String(i + 1), i === 0 ? '1 fila' : (i + 1) + ' files'])];
 
-  const NOMS_BLOC = { fila: 'Fila de pauta', paraula: 'Paraules o frase', grafomotricitat: 'Traç', espai: 'Espai per dibuixar' };
+  const NOMS_BLOC = {
+    fila: 'Fila de pauta', paraula: 'Paraules o frase', grafomotricitat: 'Traç', espai: 'Espai per dibuixar',
+    caixa: 'Caixa amb text', text: 'Text', imatge: 'Dibuix', sanefa: 'Sanefa', pauta: 'Pauta buida'
+  };
   const NOM_ESTAT = Object.fromEntries(AT.motor.ESTATS);
   const W_CONTINGUT = () => C.full.amplada - C.full.marges.esquerra - C.full.marges.dreta;
   const mm = v => String(v).replace('.', ',') + ' mm';
@@ -50,8 +53,53 @@ window.AT = window.AT || {};
       const f = AT.formes[b.forma];
       return `${f ? f.nom : ''} · ${mm(AT.motor.mida(fitxa.curs, 'grafomotricitat', b.mida))}`;
     }
+    if (b.tipus === 'caixa') return `${b.text ? '«' + b.text + '»' : 'Buida'} · ${b.lletra === 'pal' ? 'pal' : 'lligada'}`;
+    if (b.tipus === 'text') return b.text ? '«' + b.text.split('\n')[0] + '»' : 'Sense text';
+    if (b.tipus === 'sanefa') return b.modeSanefa === 'imatge' ? 'Amb un dibuixet' : (AT.formes[b.forma] || {}).nom || '';
+    if (b.tipus === 'pauta') return textFiles(b.files);
+    if (b.tipus === 'imatge') return (b.src ? 'Amb dibuix' : 'Sense dibuix') + ' · ' + (b.alcada === 'auto' ? 'omple el full' : b.alcada / 10 + ' cm');
     return b.alcada === 'auto' ? 'Omple el full' : b.alcada + ' mm';
   }
+
+  /* ---------- Peces compartides: imatge i sanefa ---------- */
+  function pujaImatge(obj, clau, idf, text, canvi) {
+    const zona = h('div', { class: 'imatge-camp' });
+    const pinta = () => zona.replaceChildren(
+      obj[clau] ? h('img', { src: obj[clau], alt: '' }) : h('span', { class: 'imatge-buida' }, icona('imatge', 22)),
+      h('div', { class: 'imatge-accions' },
+        h('span', { class: 'etiqueta' }, text),
+        h('label', { class: 'boto boto-petit', for: idf }, obj[clau] ? 'Canvia' : 'Puja una imatge'),
+        h('input', {
+          type: 'file', id: idf, accept: 'image/*', class: 'sr',
+          onchange: async e => {
+            try { obj[clau] = await AT.redueixImatge(e.target.files[0], 1400); canvi(true); pinta(); }
+            catch (err) { AT.avis(err.message, 'error'); }
+          }
+        }),
+        obj[clau] ? h('button', { type: 'button', class: 'boto boto-petit', onclick: () => { obj[clau] = null; canvi(true); pinta(); } }, 'Treu') : null));
+    pinta();
+    return zona;
+  }
+
+  function campsSanefa(sf, prefix, canvi) {
+    const id = k => prefix + '-' + k;
+    const zona = h('div', { class: 'camps-sanefa' });
+    const pinta = () => {
+      const formes = h('div', { class: 'graella-formes', role: 'radiogroup', 'aria-label': 'Traç de la sanefa' },
+        Object.entries(AT.formes).map(([k, f]) => [
+          h('input', { type: 'radio', name: id('forma'), id: id('f-' + k), value: k, checked: sf.forma === k, onchange: () => { sf.forma = k; canvi(true); } }),
+          h('label', { for: id('f-' + k), class: 'forma' }, AT.motor.miniForma(k), h('span', null, f.nom))]));
+      zona.replaceChildren(
+        segmentat('Què hi ha a la sanefa', id('mode'), [['forma', 'Un traç'], ['imatge', 'Un dibuixet']], sf.modeSanefa || 'forma', v => { sf.modeSanefa = v; canvi(true); pinta(); }),
+        sf.modeSanefa === 'imatge' ? pujaImatge(sf, 'imatge', id('img'), 'Dibuixet que es repeteix', canvi) : formes,
+        segmentat('Quants en fa de model', id('model'), [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']], sf.model || 2, v => { sf.model = Number(v); canvi(true); }),
+        segmentat('La resta', id('resta'), [['puntets', sf.modeSanefa === 'imatge' ? 'Molt clara' : 'De puntets'], ['buit', 'En blanc']], sf.resta || 'puntets', v => { sf.resta = v; canvi(true); }));
+    };
+    pinta();
+    return zona;
+  }
+
+  const ESTILS_CAIXA = [['puntets', 'Per resseguir'], ['model', 'Model'], ['gris', 'Gris clar'], ['buit', 'Buida']];
 
   /* ---------- Formularis de cada tipus de bloc ---------- */
   /* Lletra de l'escola en petit (per al teclat de l'editor) */
@@ -98,7 +146,7 @@ window.AT = window.AT || {};
     return [
       camp('Files', selector(id('files'), opcionsFiles, b.files, v => { b.files = v === 'auto' ? 'auto' : Number(v); canvi(true); }), id('files'),
         'Totes les files d’aquest bloc són iguals. Per fer-ne una de diferent, duplica el bloc.'),
-      segmentat('Mida de la pauta', id('mida'), [['gran', 'Gran · ' + mm(mides.gran)], ['mitjana', 'Mitjana · ' + mm(mides.mitjana)], ['petita', 'Petita · ' + mm(mides.petita)]], b.mida, v => { b.mida = v; canvi(true); })
+      segmentat('Mida de la pauta', id('mida'), [['gran', 'Gran · ' + mm(mides.gran)], ['mitjana', 'Mitjana · ' + mm(mides.mitjana)], ['petita', 'Petita · ' + mm(mides.petita)], ['mini', 'Molt petita · ' + mm(mides.mini)]], b.mida, v => { b.mida = v; canvi(true); })
     ];
   }
 
@@ -214,6 +262,68 @@ window.AT = window.AT || {};
     ];
   }
 
+  function formCaixa(b, fitxa, canvi) {
+    const id = k => `b${b.id}-${k}`;
+    return [
+      camp('Text', h('input', { type: 'text', id: id('text'), value: b.text || '', maxlength: 60, oninput: e => { b.text = e.target.value; canvi(true); } }), id('text'), 'Deixa-la buida per fer una caixa per escriure.'),
+      segmentat('Lletra', id('lletra'), [['lligada', 'Lligada'], ['pal', 'Pal (majúscules)']], b.lletra, v => { b.lletra = v; canvi(true); }),
+      segmentat('Com es veu', id('estil'), ESTILS_CAIXA, b.estil, v => { b.estil = v; canvi(true); }),
+      segmentat('Mida', id('mida'), [['gran', 'Gran'], ['mitjana', 'Mitjana'], ['petita', 'Petita']], b.mida, v => { b.mida = v; canvi(true); }),
+      segmentat('Amplada', id('ampl'), [['plena', 'Tota la fila'], ['centrada', 'Centrada'], ['parella', 'Dues caixes']], b.amplada, v => { b.amplada = v; canvi(true); }),
+      casella(id('pauta'), 'Amb la caixa i la pauta', b.pauta !== false, v => { b.pauta = v; canvi(true); })
+    ];
+  }
+  function formText(b, fitxa, canvi) {
+    const id = k => `b${b.id}-${k}`;
+    return [
+      camp('Text', h('textarea', { id: id('text'), rows: 3, oninput: e => { b.text = e.target.value; canvi(true); } }, b.text || ''), id('text')),
+      segmentat('Mida', id('mida'), [['12', '12 pt'], ['14', '14 pt'], ['16', '16 pt'], ['20', '20 pt']], b.midaText, v => { b.midaText = Number(v); canvi(true); }),
+      segmentat('Alineació', id('al'), [['left', 'Esquerra'], ['center', 'Centre']], b.alineacio || 'left', v => { b.alineacio = v; canvi(); }),
+      casella(id('neg'), 'En negreta', b.negreta, v => { b.negreta = v; canvi(); })
+    ];
+  }
+  const opcionsAlcada = [['auto', 'Omple el full'], ['40', '4 cm'], ['60', '6 cm'], ['80', '8 cm'], ['100', '10 cm'], ['130', '13 cm'], ['160', '16 cm'], ['200', '20 cm']];
+  function formImatge(b, fitxa, canvi) {
+    const id = k => `b${b.id}-${k}`;
+    return [
+      pujaImatge(b, 'src', id('img'), 'Dibuix (es veu sencer, sense retallar)', canvi),
+      camp('Alçada', selector(id('alt'), opcionsAlcada, b.alcada, v => { b.alcada = v === 'auto' ? 'auto' : Number(v); canvi(true); }), id('alt'))
+    ];
+  }
+  function formSanefa(b, fitxa, canvi) { return [campsSanefa(b, 'b' + b.id, canvi)]; }
+  function formPauta(b, fitxa, canvi) {
+    const id = k => `b${b.id}-${k}`;
+    const mides = C.cursos[fitxa.curs].mides.caligrafia;
+    return [
+      camp('Files', selector(id('files'), opcionsFiles, b.files, v => { b.files = v === 'auto' ? 'auto' : Number(v); canvi(true); }), id('files')),
+      segmentat('Mida de la pauta', id('mida'), [['gran', 'Gran · ' + mm(mides.gran)], ['mitjana', 'Mitjana · ' + mm(mides.mitjana)], ['petita', 'Petita · ' + mm(mides.petita)], ['mini', 'Molt petita · ' + mm(mides.mini)]], b.mida, v => { b.mida = v; canvi(true); })
+    ];
+  }
+
+  /* Dades de la portada i de la dita (fitxes amb versions) */
+  function panellCompost(fitxa, canvi) {
+    const d = fitxa.dades, c = AT.compostos[fitxa.compost];
+    d.versions = d.versions || {};
+    const esPortada = fitxa.compost === 'portada';
+    return h('section', { class: 'panell-seccio' },
+      h('h2', { class: 'panell-titol' }, esPortada ? 'Portada' : 'Dita'),
+      esPortada
+        ? camp('Mes', h('input', { type: 'text', id: 'c-mes', value: d.mes || '', maxlength: 20, oninput: e => { d.mes = e.target.value; canvi(true); } }), 'c-mes')
+        : camp('Títol', h('input', { type: 'text', id: 'c-titol', value: d.titol || 'Dita', maxlength: 20, oninput: e => { d.titol = e.target.value; canvi(true); } }), 'c-titol', 'Per exemple «Dita», «Refrany» o «Endevinalla».'),
+      camp('Dita', h('textarea', { id: 'c-dita', rows: 3, placeholder: 'El sol de setembre madura el codonyer.', oninput: e => { d.dita = e.target.value; canvi(true); } }, d.dita || ''), 'c-dita',
+        'Escriu-la normal. Es parteix sola en línies; si vols triar on es parteix, fes un salt de línia.' + (esPortada ? ' A la versió PI no hi surt.' : '')),
+      segmentat('Com es veu', 'c-estil', [['puntets', 'Per resseguir'], ['model', 'Model per copiar']], d.estil || 'puntets', v => { d.estil = v; canvi(true); }),
+      esPortada ? null : segmentat('Caixes buides per escriure', 'c-buides', [['0', '0'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']], d.caixesBuides || 0, v => { d.caixesBuides = Number(v); canvi(true); }),
+      h('fieldset', { class: 'camp' }, h('legend', { class: 'etiqueta' }, 'Versions que surten'),
+        h('div', { class: 'fila-botons' }, c.versions.map(([k, nom]) => casella('c-v-' + k, nom, d.versions[k] !== false, v => { d.versions[k] = v; canvi(true); })))),
+      h('div', { class: 'separador' }),
+      h('h3', { class: 'panell-subtitol' }, 'Dibuix'),
+      pujaImatge(d, 'imatge', 'c-img', esPortada ? 'Dibuix de la portada' : 'Dibuix (opcional)', canvi),
+      h('div', { class: 'separador' }),
+      h('h3', { class: 'panell-subtitol' }, 'Sanefa del final'),
+      campsSanefa(d.sanefa = d.sanefa || {}, 'c-sf', canvi));
+  }
+
   function formEspai(b, fitxa, canvi) {
     const id = k => `b${b.id}-${k}`;
     return [
@@ -255,7 +365,9 @@ window.AT = window.AT || {};
     };
     const pinta = () => {
       const res = AT.motor.fulls(fitxa);
-      fulls.replaceChildren(...res.fulls.map((f, i) => h('div', { class: 'marc-full', 'aria-label': 'Full ' + (i + 1) }, f)));
+      fulls.replaceChildren(...res.fulls.map((f, i) => h('figure', { class: 'full-figura' },
+        f.dataset.versio ? h('figcaption', null, 'Versió ' + f.dataset.versio) : null,
+        h('div', { class: 'marc-full', 'aria-label': 'Full ' + (i + 1) }, f))));
       ajustaEscala();
       const n = res.fulls.length;
       resum.replaceChildren(
@@ -291,7 +403,7 @@ window.AT = window.AT || {};
       refrescadors = [];
       llistaBlocs.replaceChildren(...fitxa.blocs.map((b, i) => {
         const obert = oberts.has(b.id);
-        const form = { fila: formFila, paraula: formParaula, grafomotricitat: formGrafo }[b.tipus] || formEspai;
+        const form = { fila: formFila, paraula: formParaula, grafomotricitat: formGrafo, caixa: formCaixa, text: formText, imatge: formImatge, sanefa: formSanefa, pauta: formPauta }[b.tipus] || formEspai;
         const cos = h('div', { class: 'bloc-cos', id: 'cos-' + b.id, hidden: !obert }, obert ? form(b, fitxa, canvi, refrescadors) : null);
         const confirma = h('div', { class: 'confirma', hidden: true },
           h('span', null, 'Vols treure aquest bloc?'),
@@ -339,9 +451,9 @@ window.AT = window.AT || {};
       h('h2', { class: 'panell-titol' }, 'Capçalera'),
       camp('Títol de la fitxa', entradaTitol, idT, fitxa.area === 'caligrafia' ? 'Es posa sol amb les lletres de la fitxa fins que l’escrius tu.' : null),
       segmentat('Curs', 'fitxa-curs', [['primer', '1r'], ['segon', '2n']], fitxa.curs, v => { fitxa.curs = v; canvi(true); pintaBlocs(); actualitzaMolles(); }),
-      casella('fitxa-cap', 'Capçalera de l’escola (Nom, Data, Títol i Curs)', fitxa.capcalera !== false, v => { fitxa.capcalera = v; canvi(true); }));
+      fitxa.compost ? null : casella('fitxa-cap', 'Capçalera de l’escola (logotip, Nom i Data)', fitxa.capcalera !== false, v => { fitxa.capcalera = v; canvi(true); }));
 
-    const esCal = fitxa.area === 'caligrafia';
+    const esCal = fitxa.area === 'caligrafia' && !!fitxa.lletres;
     if (esCal) {
       if (!Array.isArray(fitxa.lletres)) fitxa.lletres = ['a'];
       if (!fitxa.mostra) fitxa.mostra = { visible: true, estil: 'fletxes', mida: 'gran' };
@@ -350,14 +462,16 @@ window.AT = window.AT || {};
     const panell = h('aside', { class: 'panell', 'aria-label': 'Contingut de la fitxa' },
       panellCap,
       esCal ? panellLletres(fitxa, canvi, quanCanvienLletres) : null,
-      h('section', { class: 'panell-seccio' },
+      fitxa.compost ? panellCompost(fitxa, canvi) : h('section', { class: 'panell-seccio' },
         h('h2', { class: 'panell-titol' }, esCal ? 'Files i blocs' : 'Blocs'),
         llistaBlocs,
         h('div', { class: 'afegeix' },
           h('span', { class: 'etiqueta' }, 'Afegeix'),
           h('div', { class: 'fila-botons' },
-            esCal ? [botoAfegeix('fila', 'Fila de pauta'), botoAfegeix('paraula', 'Paraules o frase')] : botoAfegeix('grafomotricitat', 'Traç'),
-            botoAfegeix('espai', 'Espai per dibuixar')))));
+            esCal ? [botoAfegeix('fila', 'Fila de pauta'), botoAfegeix('paraula', 'Paraules o frase')] : null,
+            fitxa.area === 'grafomotricitat' ? botoAfegeix('grafomotricitat', 'Traç') : [botoAfegeix('paraula', 'Paraules o frase'), botoAfegeix('pauta', 'Pauta buida')].filter(() => !esCal),
+            botoAfegeix('caixa', 'Caixa amb text'), botoAfegeix('text', 'Text'), botoAfegeix('sanefa', 'Sanefa'),
+            botoAfegeix('imatge', 'Dibuix'), botoAfegeix('espai', 'Espai per dibuixar')))));
 
     /* Barra superior */
     const zonaMolles = h('div');
@@ -365,13 +479,13 @@ window.AT = window.AT || {};
       h('nav', { class: 'molles', 'aria-label': 'On ets' }, h('ol', null,
         h('li', null, h('a', { href: '#inici' }, 'Inici')),
         h('li', null, h('a', { href: '#' + fitxa.curs }, curs().nom)),
-        h('li', null, h('a', { href: `#${fitxa.curs}-${fitxa.area}` }, area.nom)),
-        h('li', null, h('span', { 'aria-current': 'page' }, 'Editor')))));
+        h('li', null, h('a', { href: `#${fitxa.curs}-${fitxa.mes}` }, AT.nomMes(fitxa.mes))),
+        h('li', null, h('span', { 'aria-current': 'page' }, (area && area.nom) || 'Fitxa')))));
     actualitzaMolles();
 
     const confirmaEsb = h('div', { class: 'confirma', hidden: true },
       h('span', null, 'Vols esborrar aquesta fitxa?'),
-      h('button', { type: 'button', class: 'boto boto-perill boto-petit', onclick: () => { AT.store.esborra(fitxa.id); AT.avis('Fitxa esborrada'); location.hash = `${fitxa.curs}-${fitxa.area}`; } }, 'Esborra'),
+      h('button', { type: 'button', class: 'boto boto-perill boto-petit', onclick: () => { AT.store.esborra(fitxa.id); AT.avis('Fitxa esborrada'); location.hash = `${fitxa.curs}-${fitxa.mes}`; } }, 'Esborra'),
       h('button', { type: 'button', class: 'boto boto-petit', onclick: () => { confirmaEsb.hidden = true; } }, 'Cancel·la'));
 
     const imprimeix = () => {
@@ -403,6 +517,20 @@ window.AT = window.AT || {};
     const titolAnterior = document.title;
     const curs = C.cursos[fitxa.curs];
     document.title = `Fitxa - ${fitxa.titol} - ${curs ? curs.curt : ''} - ${new Date().toISOString().slice(0, 10)}`;
+    const neteja = () => { document.title = titolAnterior; zona.replaceChildren(); window.removeEventListener('afterprint', neteja); };
+    window.addEventListener('afterprint', neteja);
+    setTimeout(() => window.print(), 60);
+  };
+
+  /* Imprimeix totes les fitxes d'un dossier, en ordre */
+  AT.imprimeixDossier = function (curs, mes) {
+    const zona = document.getElementById('impressio');
+    const fulls = [];
+    AT.store.dossier(curs, mes).forEach(f => fulls.push(...AT.motor.fulls(f).fulls));
+    if (!fulls.length) return;
+    zona.replaceChildren(...fulls);
+    const titolAnterior = document.title;
+    document.title = `Dossier - ${AT.nomMes(mes)} - ${C.cursos[curs].curt}`;
     const neteja = () => { document.title = titolAnterior; zona.replaceChildren(); window.removeEventListener('afterprint', neteja); };
     window.addEventListener('afterprint', neteja);
     setTimeout(() => window.print(), 60);

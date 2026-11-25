@@ -6,7 +6,7 @@
      (e, l…), la unió arriba al punt on la seva entrada fa la mateixa alçada que la sortida anterior.
    - Una paraula unida porta un sol punt verd (inici) i un sol punt vermell (final).
    - Accents: un traç curt a sobre (à è é í ò ó ú); dièresi: dos punts (ï ü).
-   - Majúscules, números i signes: tipografia normal (Nunito), de la línia de base a la de dalt.
+   - Majúscules, números i signes: tipografia normal (Raleway; Raleway Dots per resseguir), de la base a la línia de dalt.
    Unitats: les de la pauta (y=0 base, y=1 alçada de la x, y=2 dalt, y=−1 baix). */
 window.AT = window.AT || {};
 
@@ -65,12 +65,12 @@ window.AT = window.AT || {};
   const ctx = document.createElement('canvas').getContext('2d');
   let ratioMaj = 0.705;
   AT.paraulaMetrica = function () {
-    ctx.font = '300 100px Nunito';
+    ctx.font = '100px "Raleway Dots"';
     const m = ctx.measureText('H');
     if (m.actualBoundingBoxAscent > 30) ratioMaj = m.actualBoundingBoxAscent / 100;
   };
   const midaGlif = () => 2 / ratioMaj; // la majúscula arriba de la base a la línia de dalt
-  const ampladaGlif = ch => { ctx.font = '300 100px Nunito'; return ctx.measureText(ch).width / 100 * midaGlif(); };
+  const ampladaGlif = ch => { ctx.font = '100px "Raleway Dots"'; return ctx.measureText(ch).width / 100 * midaGlif(); };
 
   /* Construeix la geometria d'un text */
   AT.paraula = {};
@@ -228,8 +228,11 @@ window.AT = window.AT || {};
       taronja(); // només punts
     }
     if (estat !== 'punts') {
-      const fill = estat === 'model' || estat === 'fletxes' ? COL.model : COL.repas;
-      g.glifs.forEach(gl => grup.append(s('text', { x: X(gl.x), y: Y(0), 'font-family': 'Nunito, sans-serif', 'font-weight': 300, 'font-size': AT.n(midaGlif() * 100, 1), fill }, gl.ch)));
+      const fs = AT.n(midaGlif() * 100, 1);
+      g.glifs.forEach(gl => {
+        if (estat === 'puntets') grup.append(s('text', { x: X(gl.x), y: Y(0), 'font-family': 'Raleway Dots, Raleway, sans-serif', 'font-size': fs, fill: COL.model, stroke: COL.model, 'stroke-width': 3.5, 'stroke-linejoin': 'round' }, gl.ch));
+        else grup.append(s('text', { x: X(gl.x), y: Y(0), 'font-family': 'Raleway, sans-serif', 'font-weight': 300, 'font-size': fs, fill: estat === 'gris' ? COL.repas : COL.model }, gl.ch));
+      });
     }
     g.verds.forEach(p => grup.append(s('circle', { cx: X(p[0]), cy: Y(p[1]), r: R_PUNT * 100, fill: COL.verd })));
     g.vermells.forEach(p => grup.append(s('circle', { cx: X(p[0]), cy: Y(p[1]), r: R_PUNT * 100, fill: COL.vermell })));
