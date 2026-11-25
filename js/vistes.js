@@ -195,24 +195,6 @@ window.AT = window.AT || {};
 
   /* ---------- Configuració ---------- */
   AT.vistes.configuracio = function () {
-    const cfg = AT.store.config();
-    const previa = h('div', { class: 'logo-previa' });
-    const pintaLogo = () => {
-      previa.replaceChildren(cfg.logo ? h('img', { src: cfg.logo, alt: 'Logotip actual' }) : h('span', { class: 'buit' }, 'Encara no hi ha logotip.'));
-      treu.hidden = !cfg.logo;
-    };
-    const treu = h('button', { class: 'boto', type: 'button', onclick: () => { AT.store.desaConfig({ logo: null }); pintaLogo(); AT.avis('Logotip tret'); } }, 'Treu el logotip');
-    const entradaLogo = h('input', {
-      type: 'file', id: 'cfg-logo', accept: 'image/png,image/jpeg,image/webp', class: 'sr',
-      onchange: async e => {
-        try {
-          const url = await AT.redueixImatge(e.target.files[0], 500);
-          if (AT.store.desaConfig({ logo: url })) AT.avis('Logotip desat');
-          pintaLogo();
-        } catch (err) { AT.avis(err.message, 'error'); }
-        e.target.value = '';
-      }
-    });
     const entradaImport = h('input', {
       type: 'file', id: 'cfg-importa', accept: 'application/json,.json', class: 'sr',
       onchange: e => {
@@ -241,19 +223,6 @@ window.AT = window.AT || {};
       molles([{ ruta: 'inici', text: 'Inici' }, { text: 'Configuració' }]),
       h('h1', { class: 'titol-vista' }, 'Configuració'),
       h('section', { class: 'bloc-config' },
-        h('h2', null, 'Logotip de la capçalera'),
-        h('p', null, 'Puja el logotip de l’escola (el de la «Plantilla fitxes»). Sortirà a la capçalera de totes les fitxes, a l’esquerra del títol.'),
-        previa,
-        h('div', { class: 'fila-botons' },
-          h('label', { class: 'boto boto-primari', for: 'cfg-logo' }, icona('puja', 18), 'Puja el logotip'), entradaLogo, treu)),
-      h('section', { class: 'bloc-config' },
-        h('h2', null, 'Versió de la q'),
-        h('p', null, 'L’escola encara ha de decidir quina q fa servir. La que triïs aquí sortirà a totes les fitxes.'),
-        h('div', { class: 'segmentat', role: 'radiogroup', 'aria-label': 'Versió de la q' },
-          [['q', 'q de la directora (pal horitzontal)'], ['q_cua', 'q amb cua']].map(([v, t]) => [
-            h('input', { type: 'radio', name: 'cfg-q', id: 'cfg-q-' + v, value: v, checked: (cfg.versioQ || 'q') === v, onchange: () => { AT.store.desaConfig({ versioQ: v }); AT.avis('Versió de la q desada'); } }),
-            h('label', { for: 'cfg-q-' + v }, t)]))),
-      h('section', { class: 'bloc-config' },
         h('h2', null, 'Còpia de seguretat'),
         h('p', null, 'Les fitxes es desen en aquest navegador. Baixa’n una còpia per passar-les a un altre ordinador o compartir-les amb una altra mestra.'),
         h('div', { class: 'fila-botons' },
@@ -266,7 +235,6 @@ window.AT = window.AT || {};
           h('button', { class: 'boto boto-perill', type: 'button', onclick: () => { confirmaTot.hidden = false; } }, 'Esborra totes les fitxes')),
         confirmaTot),
       h('p', { class: 'meta' }, 'TRAÇApp · versió ' + C.versio));
-    pintaLogo();
     return v;
   };
 

@@ -14,7 +14,7 @@ App web per preparar les fitxes de cal·ligrafia i grafomotricitat de 1r i 2n de
 3. **Models**: tria un punt de partida.
 4. **Editor**: capçalera (títol, curs), **lletres de la fitxa** i **mostra** sota la capçalera, i blocs: files de pauta (cada columna pot ser model, model amb fletxes, gris, puntets, només punts o en blanc), paraules o frase, traç i espai per dibuixar. Les files poden fer referència a «1a lletra de la fitxa», «2a lletra»…, i així tota la fitxa canvia quan canvien les lletres. La fitxa es veu a mida real a la dreta, es desa sola i s'imprimeix o es desa en PDF amb el botó granat.
 
-Les fitxes es desen al navegador de cada ordinador. A **Configuració** es puja el logotip de la capçalera i es fan còpies de seguretat (.json) per passar fitxes d'un ordinador a un altre.
+Les fitxes es desen al navegador de cada ordinador. A **Configuració** es fan còpies de seguretat (.json) per passar fitxes d'un ordinador a un altre. El logotip de l'escola ja va inclòs a la capçalera de totes les fitxes (`js/logo-escola.js`). La versió de la q es tria a `js/config.js` (`versioQ`).
 
 ## Estructura
 | Fitxer | Què hi ha |

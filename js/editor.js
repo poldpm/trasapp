@@ -339,8 +339,7 @@ window.AT = window.AT || {};
       h('h2', { class: 'panell-titol' }, 'Capçalera'),
       camp('Títol de la fitxa', entradaTitol, idT, fitxa.area === 'caligrafia' ? 'Es posa sol amb les lletres de la fitxa fins que l’escrius tu.' : null),
       segmentat('Curs', 'fitxa-curs', [['primer', '1r'], ['segon', '2n']], fitxa.curs, v => { fitxa.curs = v; canvi(true); pintaBlocs(); actualitzaMolles(); }),
-      casella('fitxa-cap', 'Capçalera de l’escola (Nom, Data, Títol i Curs)', fitxa.capcalera !== false, v => { fitxa.capcalera = v; canvi(true); }),
-      AT.store.config().logo ? null : h('p', { class: 'ajuda' }, 'Falta el logotip. ', h('a', { href: '#configuracio' }, 'Puja’l a Configuració'), '.'));
+      casella('fitxa-cap', 'Capçalera de l’escola (Nom, Data, Títol i Curs)', fitxa.capcalera !== false, v => { fitxa.capcalera = v; canvi(true); }));
 
     const esCal = fitxa.area === 'caligrafia';
     if (esCal) {

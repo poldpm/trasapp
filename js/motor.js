@@ -44,7 +44,7 @@ window.AT = window.AT || {};
 
   /* Clau de dades d'una lletra (la q segons la configuració) */
   AT.motor.clauLletra = function (lletra) {
-    if (lletra === 'q') return (AT.store.config().versioQ === 'q_cua') ? 'q_cua' : 'q';
+    if (lletra === 'q') return AT.config.versioQ === 'q_cua' ? 'q_cua' : 'q';
     return L.lletres[lletra] ? lletra : 'a';
   };
   AT.motor.lletresDisponibles = 'a b c ç d e f g h i j k l m n o p q r s t u v w x y z'.split(' ');
@@ -541,7 +541,7 @@ window.AT = window.AT || {};
   /* ---------- Fulls (DOM) ---------- */
   function capcalera(fitxa) {
     const curs = AT.config.cursos[fitxa.curs];
-    const logo = AT.store.config().logo;
+    const logo = AT.LOGO_ESCOLA;
     return h('table', { class: 'capcalera' },
       h('colgroup', null, h('col'), h('col'), h('col'), h('col')),
       h('tr', null,
