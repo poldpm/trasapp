@@ -80,12 +80,97 @@ AT.config = {
     imatge: { tipus: 'imatge', src: null, alcada: 'auto' },
     sanefa: { tipus: 'sanefa', modeSanefa: 'forma', forma: 'merlets', imatge: null, model: 2, resta: 'referencies', mida: 'gran' },
     pauta: { tipus: 'pauta', files: 2, mida: 'mitjana' },
-    serie: { tipus: 'serie', forma: 'copa', alcadaTraç: 2, enunciat: '', columnes: ['model', 'gris', 'punts'], files: 1, mida: 'gran' }
+    serie: { tipus: 'serie', forma: 'copa', alcadaTraç: 2, enunciat: '', columnes: ['model', 'gris', 'punts'], files: 1, mida: 'gran' },
+    voltant: { tipus: 'voltant', forma: 'bucles', mida: 'mitjana', model: 2, resta: 'punts', caixa: true, files: 1, enunciat: '' },
+    colors: { tipus: 'colors', patro: [[1, 0], [0, 1]], model: 2, cela: 6, files: 1, enunciat: '' },
+    quadricula: { tipus: 'quadricula', sanefa: 'merlets', model: 2, cela: 6, files: 1, enunciat: '' },
+    copia: { tipus: 'copia', graella: 'quadricula', parells: 1, figures: ['casa', 'fletxa'], files: 1, enunciat: '' },
+    estret: { tipus: 'estret', forma: 'recte', ampleInici: 16, ampleFinal: 5, files: 1, enunciat: '' }
   }
 };
 
 /* Models de partida. Cada funció rep el curs i retorna { titol, blocs }. */
 AT.models = {
+  /* «De traç en traç»: grafomotricitat fora dels dossiers del mes, per a 1r i 2n.
+     «nivell» (1 a 3 estrelles) és només una referència de dificultat per a la mestra. */
+  detrac: [
+    {
+      id: 'bucles-punts', nom: 'Bucles al voltant de punts', nivell: 1, tipus: 'Al voltant de punts',
+      text: 'Bucles i ones que giren al voltant d’un punt. Els primers fets i la resta només amb els punts.',
+      crea: () => ({ titol: 'Bucles al voltant de punts', blocs: [
+        { tipus: 'voltant', forma: 'bucles', mida: 'gran', files: 2, enunciat: 'Fes els bucles al voltant dels punts.' },
+        { tipus: 'voltant', forma: 'ones', mida: 'gran', files: 2 },
+        { tipus: 'voltant', forma: 'bucles', mida: 'mitjana', files: 'auto' }] })
+    },
+    {
+      id: 'rodones-punts', nom: 'Rodones i cargols', nivell: 2, tipus: 'Al voltant de punts',
+      text: 'Rodones al voltant d’un punt i cargols que surten del punt.',
+      crea: () => ({ titol: 'Rodones i cargols', blocs: [
+        { tipus: 'voltant', forma: 'rodones', mida: 'mitjana', files: 2, enunciat: 'Ressegueix i continua al voltant dels punts.' },
+        { tipus: 'voltant', forma: 'cargols', mida: 'mitjana', files: 'auto' }] })
+    },
+    {
+      id: 'camins-estrets', nom: 'Camins que s’estrenyen', nivell: 1, tipus: 'Camins',
+      text: 'Traça pel mig del camí sense tocar les vores, del punt verd al vermell.',
+      crea: () => ({ titol: 'Camins que s’estrenyen', blocs: [
+        { tipus: 'estret', forma: 'recte', files: 2, enunciat: 'Ves del punt verd al vermell sense tocar les vores.' },
+        { tipus: 'estret', forma: 'ona', files: 2 },
+        { tipus: 'estret', forma: 'zigazaga', files: 'auto' }] })
+    },
+    {
+      id: 'colors', nom: 'Patrons de colors', nivell: 2, tipus: 'Quadrícula',
+      text: 'Continua el patró de quadrets de colors. El patró el pintes tu.',
+      crea: () => ({ titol: 'Patrons de colors', blocs: [
+        { tipus: 'colors', patro: [[0, 1, 0], [0, 0, 0]], files: 1, enunciat: 'Continua el patró.' },
+        { tipus: 'colors', patro: [[2, 0, 2, 0], [0, 2, 0, 0], [0, 0, 0, 0]], files: 1 },
+        { tipus: 'colors', patro: [[3, 0, 0, 0], [0, 3, 0, 3], [0, 0, 3, 0]], files: 1 },
+        { tipus: 'colors', patro: [[4, 4, 0], [4, 0, 0], [4, 4, 4]], files: 1 },
+        { tipus: 'colors', patro: [[0, 5, 0], [5, 0, 5]], files: 1 },
+        { tipus: 'colors', patro: [[6, 0], [6, 6], [0, 6]], files: 1 }] })
+    },
+    {
+      id: 'sanefes-quadricula', nom: 'Sanefes en quadrícula', nivell: 3, tipus: 'Quadrícula',
+      text: 'Sanefes geomètriques: tots els vèrtexs cauen en un nus de la quadrícula.',
+      crea: () => ({ titol: 'Sanefes en quadrícula', blocs: [
+        { tipus: 'quadricula', sanefa: 'merlets', files: 1, enunciat: 'Continua les sanefes.' },
+        { tipus: 'quadricula', sanefa: 'rombes', files: 1 }, { tipus: 'quadricula', sanefa: 'triangles', files: 1 },
+        { tipus: 'quadricula', sanefa: 'escala', files: 1 }, { tipus: 'quadricula', sanefa: 'fletxes', files: 1 },
+        { tipus: 'quadricula', sanefa: 'cases', files: 1 }, { tipus: 'quadricula', sanefa: 'greca', files: 1 }] })
+    },
+    {
+      id: 'copia-quadricula', nom: 'Copia en quadrícula', nivell: 3, tipus: 'Copiar figures',
+      text: 'Copia la figura a la quadrícula del costat, quadret a quadret.',
+      crea: () => ({ titol: 'Copia en quadrícula', blocs: [
+        { tipus: 'copia', graella: 'quadricula', parells: 1, figures: ['vaixell'], files: 1, enunciat: 'Copia el dibuix a la quadrícula.' },
+        { tipus: 'copia', graella: 'quadricula', parells: 1, figures: ['peix'], files: 1 },
+        { tipus: 'copia', graella: 'quadricula', parells: 1, figures: ['castell'], files: 1 }] })
+    },
+    {
+      id: 'copia-punts', nom: 'Copia en punts (geoplà)', nivell: 3, tipus: 'Copiar figures',
+      text: 'Copia la figura unint els punts de la graella del costat.',
+      crea: () => ({ titol: 'Copia en punts', blocs: [
+        { tipus: 'copia', graella: 'punts', parells: 2, figures: ['casa', 'fletxa'], files: 1, enunciat: 'Copia la figura unint els punts.' },
+        { tipus: 'copia', graella: 'punts', parells: 2, figures: ['arbre', 'estrella'], files: 1 },
+        { tipus: 'copia', graella: 'punts', parells: 2, figures: ['cor', 'cotxe'], files: 1 },
+        { tipus: 'copia', graella: 'punts', parells: 2, figures: ['espelma', 'vaixell'], files: 1 }] })
+    },
+    {
+      id: 'sanefes-punts', nom: 'Sanefes per continuar', nivell: 2, tipus: 'Sanefes i camins',
+      text: 'Sanefes que comencen fetes, amb punts de referència a cada canvi de direcció.',
+      crea: () => ({ titol: 'Sanefes per continuar', blocs: [
+        { tipus: 'text', text: 'Continua les sanefes.', midaText: 14, negreta: true },
+        { tipus: 'sanefa', forma: 'ones' }, { tipus: 'sanefa', forma: 'bucles' }, { tipus: 'sanefa', forma: 'merlets' },
+        { tipus: 'sanefa', forma: 'cercles' }, { tipus: 'sanefa', forma: 'espirals' }, { tipus: 'sanefa', forma: 'zigazaga' }] })
+    },
+    {
+      id: 'dibuix-patrons', nom: 'Dibuix amb patrons', nivell: 2, tipus: 'Sanefes i camins',
+      text: 'Un dibuix teu (un pallasso, boles de Nadal…) per continuar els traços que té a dins.',
+      crea: () => ({ titol: 'Dibuix amb patrons', blocs: [
+        { tipus: 'text', text: 'Continua els traços de cada franja.', midaText: 14, negreta: true },
+        { tipus: 'imatge', src: null, alcada: 'auto' }] })
+    }
+  ],
+
   /* Fitxes de cal·ligrafia: «lletres» són les lletres que es treballen; la mostra les ensenya
      sota la capçalera i les files hi fan referència (@0, @1…), així tota la fitxa canvia si canvien. */
   portada: [

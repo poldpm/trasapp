@@ -13,7 +13,7 @@
     if (r.startsWith('fitxa-')) return AT.vistes.editor(r.slice(6));
     const [curs, mes] = r.split('-');
     if (AT.config.cursos[curs] && !mes) return AT.vistes.curs(curs);
-    if (AT.config.cursos[curs] && AT.config.mesos.some(m => m[0] === mes)) return AT.vistes.dossier(curs, mes);
+    if (AT.config.cursos[curs] && (mes === 'detrac' || AT.config.mesos.some(m => m[0] === mes))) return AT.vistes.dossier(curs, mes);
     if (AT.config.cursos[curs]) return AT.vistes.curs(curs); // adreces antigues (#primer-caligrafia…)
     return AT.vistes.noTrobat();
   }

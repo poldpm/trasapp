@@ -479,3 +479,40 @@ h1, h2, h3 { font-family: var(--f-titol); font-weight: 600; text-wrap: balance; 
   .fitxa-dossier .mini-full { width: 72px !important; height: 102px !important; }
   .fitxa-dossier .mini-full > .full { transform: scale(0.0907) !important; }
 }
+
+/* ---------- De traç en traç ---------- */
+.tria-detrac {
+  display: flex; align-items: center; gap: 18px; text-decoration: none; color: var(--tinta);
+  background: var(--paper); border: 1px solid var(--linia); border-left: 4px solid var(--granat); border-radius: var(--r);
+  padding: 16px 20px; transition: border-color .18s, transform .18s;
+}
+.tria-detrac:hover { border-color: var(--granat); transform: translateY(-1px); }
+.tria-detrac-motiu { flex: none; display: flex; }
+.tria-detrac-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.tria-detrac-text strong { font-family: var(--f-titol); font-weight: 600; font-size: 21px; }
+.tria-detrac-text span { color: var(--tinta-2); font-size: 15px; }
+.tria-detrac .icona { color: var(--granat); flex: none; }
+.dificultat { display: inline-flex; align-items: center; color: var(--granat); }
+.estrelles { display: block; }
+.capd { align-items: center; }
+.capd-esq { display: flex; align-items: center; gap: 5mm; }
+.capd-logo { height: 13mm; width: auto; display: block; }
+.capd-titol { display: flex; flex-direction: column; gap: 0.5mm; border-left: 0.3mm solid #c9bcc1; padding-left: 4mm; }
+.capd-nom { font: 700 17pt var(--f-titol); color: #810023; letter-spacing: -0.01em; line-height: 1; }
+.capd-curs { font: 400 9pt var(--f-fitxa); color: #737373; }
+.detrac-motiu { display: block; }
+.nivell-full { position: absolute; color: #9a8f93; line-height: 1; }
+.pintor { display: flex; flex-direction: column; gap: 10px; }
+.paleta { display: flex; flex-wrap: wrap; gap: 6px; }
+.mostra-color { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--linia-forta); cursor: pointer; }
+.mostra-color.activa { box-shadow: 0 0 0 3px var(--granat); }
+.quadrets { display: grid; gap: 0; width: max-content; border: 1px solid #737373; }
+.quadret { width: 34px; height: 34px; border: 1px solid #d9d0d3; cursor: pointer; padding: 0; }
+.quadret:hover { outline: 2px solid var(--granat); outline-offset: -2px; }
+.editor-linies { display: flex; flex-direction: column; gap: 6px; }
+.editor-linies svg { max-width: 100%; height: auto; background: #fff; border: 1px solid var(--linia); border-radius: 8px; touch-action: manipulation; }
+.editor-linies .nus { cursor: pointer; }
+.editor-linies .nus:focus { outline: none; stroke: var(--vermell); stroke-width: 2; }
+.camps-figures { display: flex; flex-direction: column; gap: 14px; }
+.tria-model-text .dificultat { margin-bottom: 2px; }
+@media (max-width: 640px) { .tria-detrac { flex-wrap: wrap; } }

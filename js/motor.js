@@ -447,6 +447,7 @@ window.AT = window.AT || {};
     if (bloc.tipus === 'text') return AT.motor.text(bloc, fitxa, W);
     if (bloc.tipus === 'sanefa') return AT.motor.sanefa(bloc, fitxa, W);
     if (bloc.tipus === 'pauta') return AT.motor.pauta(bloc, fitxa, W);
+    if (['voltant', 'colors', 'quadricula', 'copia', 'estret'].includes(bloc.tipus)) return AT.motor[bloc.tipus](bloc, fitxa, W);
     return null; // espai i imatge: els col·loca la paginació
   }
 
@@ -568,7 +569,7 @@ window.AT = window.AT || {};
           padding: `${F.marges.dalt}mm ${F.marges.dreta}mm ${F.marges.baix}mm ${F.marges.esquerra}mm`
         }
       });
-      if (pi === 0 && fitxa.capcalera !== false) full.append(AT.motor.capcalera(fitxa));
+      if (pi === 0 && fitxa.capcalera !== false) full.append(fitxa.coleccio === 'detrac' ? AT.motor.capcaleraDetrac(fitxa) : AT.motor.capcalera(fitxa));
       const cos = h('div', { class: 'cos' });
       p.items.forEach(it => {
         if (it.tipus === 'enunciat') {
@@ -588,6 +589,8 @@ window.AT = window.AT || {};
       });
       full.append(cos);
       full.append(h('div', { class: 'num-pagina', style: { bottom: F.peu + 'mm', right: F.marges.dreta + 'mm' } }, String(primerNum + pi)));
+      /* dificultat de «De traç en traç»: estrelles a baix a l'esquerra, com a referència */
+      if (fitxa.coleccio === 'detrac' && fitxa.nivell) full.append(h('div', { class: 'nivell-full', style: { bottom: (F.peu - 1.5) + 'mm', left: F.marges.esquerra + 'mm' } }, AT.detrac.estrelles(fitxa.nivell, 13)));
       return full;
     });
     return { fulls, avisos: res.avisos, ocupacio: res.ocupacio };

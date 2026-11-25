@@ -60,7 +60,7 @@ window.AT = window.AT || {};
     const ids = ['gener', 'febrer', 'marc', 'abril', 'maig', 'juny', 'setembre', 'setembre', 'setembre', 'octubre', 'novembre', 'desembre'];
     return ids[new Date().getMonth()];
   };
-  AT.nomMes = id => (AT.config.mesos.find(m => m[0] === id) || [id, id])[1];
+  AT.nomMes = id => id === 'detrac' ? 'De traç en traç' : (AT.config.mesos.find(m => m[0] === id) || [id, id])[1];
 
   AT.titolLletres = ll => (ll.length === 1 ? 'La lletra ' : 'Lletres ') + ll.join(' - ');
 
@@ -97,6 +97,8 @@ window.AT = window.AT || {};
       const ordre = Math.max(0, ...dades.fitxes.filter(f => f.curs === curs && f.mes === mesId && !f.esborrany).map(f => f.ordre || 0)) + 1;
       const fitxa = {
         id: AT.uid(), curs, area, mes: mesId, ordre,
+        coleccio: area === 'detrac' ? 'detrac' : undefined,
+        nivell: model.nivell || undefined,
         titol: base.titol || (lletres ? AT.titolLletres(lletres) : 'Art del traç'),
         titolAuto: !base.titol && !!lletres,
         lletres: lletres || undefined,

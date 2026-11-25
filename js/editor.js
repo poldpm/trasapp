@@ -34,7 +34,8 @@ window.AT = window.AT || {};
 
   const NOMS_BLOC = {
     fila: 'Fila de pauta', paraula: 'Paraules o frase', grafomotricitat: 'Traç', espai: 'Espai per dibuixar',
-    caixa: 'Caixa amb text', text: 'Text', imatge: 'Dibuix', sanefa: 'Sanefa', pauta: 'Pauta buida', serie: 'Sèrie de traços'
+    caixa: 'Caixa amb text', text: 'Text', imatge: 'Dibuix', sanefa: 'Sanefa', pauta: 'Pauta buida', serie: 'Sèrie de traços',
+    voltant: 'Al voltant de punts', colors: 'Patró de colors', quadricula: 'Sanefa en quadrícula', copia: 'Copia la figura', estret: 'Camí que s’estreny'
   };
   const NOM_ESTAT = Object.fromEntries(AT.motor.ESTATS);
   const W_CONTINGUT = () => C.full.amplada - C.full.marges.esquerra - C.full.marges.dreta;
@@ -57,6 +58,11 @@ window.AT = window.AT || {};
     if (b.tipus === 'text') return b.text ? '«' + b.text.split('\n')[0] + '»' : 'Sense text';
     if (b.tipus === 'sanefa') return b.modeSanefa === 'imatge' ? 'Amb un dibuixet' : (AT.formes[b.forma] || {}).nom || '';
     if (b.tipus === 'pauta') return textFiles(b.files);
+    if (b.tipus === 'voltant') return `${AT.detrac.FORMES_VOLTANT[b.forma] || ''} · ${textFiles(b.files)}`;
+    if (b.tipus === 'colors') return `Patró de ${(b.patro || [[]])[0].length} columnes · ${textFiles(b.files)}`;
+    if (b.tipus === 'quadricula') return `${b.sanefa === 'propia' ? 'Sanefa pròpia' : (AT.detrac.SANEFES[b.sanefa] || {}).nom || ''} · ${textFiles(b.files)}`;
+    if (b.tipus === 'copia') return `${b.graella === 'punts' ? 'Punts' : 'Quadrícula'} · ${(b.figures || []).slice(0, Number(b.parells) === 2 ? 2 : 1).map(f => typeof f === 'object' ? 'pròpia' : ((AT.detrac.FIGURES[f] || {}).nom || '').toLowerCase()).join(', ')}`;
+    if (b.tipus === 'estret') return `${{ recte: 'Recte', ona: 'Ona', zigazaga: 'Ziga-zaga' }[b.forma] || ''} · ${textFiles(b.files)}`;
     if (b.tipus === 'serie') return `${(AT.TRACOS[b.forma] || {}).nom || ''} · ${Number(b.alcadaTraç) === 1 ? 'fins a la línia del mig' : 'fins a la línia de dalt'} · ${textFiles(b.files)}`;
     if (b.tipus === 'imatge') return (b.src ? 'Amb dibuix' : 'Sense dibuix') + ' · ' + (b.alcada === 'auto' ? 'omple el full' : b.alcada / 10 + ' cm');
     return b.alcada === 'auto' ? 'Omple el full' : b.alcada + ' mm';
@@ -366,6 +372,161 @@ window.AT = window.AT || {};
     ];
   }
 
+  /* ---------- Formularis de «De traç en traç» ---------- */
+  const filesCamp = (b, canvi, id) => camp('Files', selector(id('files'), opcionsFiles, b.files, v => { b.files = v === 'auto' ? 'auto' : Number(v); canvi(true); }), id('files'));
+  const enunciatCamp = (b, canvi, id) => camp('Enunciat (opcional)', h('input', { type: 'text', id: id('enun'), value: b.enunciat || '', oninput: e => { b.enunciat = e.target.value; canvi(true); } }), id('enun'));
+
+  function formVoltant(b, fitxa, canvi) {
+    const id = k => `b${b.id}-${k}`;
+    return [
+      segmentat('Forma', id('forma'), Object.entries(AT.detrac.FORMES_VOLTANT), b.forma, v => { b.forma = v; canvi(true); }),
+      segmentat('Mida', id('mida'), [['gran', 'Gran'], ['mitjana', 'Mitjana'], ['petita', 'Petita']], b.mida, v => { b.mida = v; canvi(true); }),
+      segmentat('Quants en fa de model', id('model'), [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']], b.model || 2, v => { b.model = Number(v); canvi(true); }),
+      segmentat('La resta', id('resta'), [['punts', 'Només els punts'], ['puntets', 'De puntets']], b.resta || 'punts', v => { b.resta = v; canvi(true); }),
+      casella(id('caixa'), 'Dins d’una caixa', b.caixa !== false, v => { b.caixa = v; canvi(true); }),
+      filesCamp(b, canvi, id), enunciatCamp(b, canvi, id)
+    ];
+  }
+
+  /* Pintor de quadrets per al patró de colors */
+  function pintorPatro(b, canvi) {
+    let color = 1;
+    const zona = h('div', { class: 'pintor' });
+    const pinta = () => {
+      const R = b.patro.length, P = b.patro[0].length;
+      zona.replaceChildren(
+        h('div', { class: 'paleta', role: 'radiogroup', 'aria-label': 'Color' }, AT.detrac.COLORS.map((c, i) => h('button', {
+          type: 'button', class: 'mostra-color' + (color === i + 1 ? ' activa' : ''), style: { background: c }, 'aria-label': 'Color ' + (i + 1), 'aria-pressed': String(color === i + 1),
+          onclick: () => { color = i + 1; pinta(); }
+        }))),
+        h('div', { class: 'quadrets', style: { gridTemplateColumns: `repeat(${P}, 34px)` } },
+          b.patro.flatMap((fila, r) => fila.map((v, k) => h('button', {
+            type: 'button', class: 'quadret', style: { background: v ? AT.detrac.COLORS[v - 1] : '#fff' }, 'aria-label': `Fila ${r + 1}, columna ${k + 1}`,
+            onclick: () => { b.patro[r][k] = b.patro[r][k] === color ? 0 : color; canvi(true); pinta(); }
+          })))),
+        h('p', { class: 'ajuda' }, 'Tria un color i clica els quadrets. Torna a clicar per deixar-lo en blanc.'));
+    };
+    pinta();
+    return { zona, pinta };
+  }
+  function formColors(b, fitxa, canvi) {
+    const id = k => `b${b.id}-${k}`;
+    if (!Array.isArray(b.patro) || !b.patro.length) b.patro = [[1, 0], [0, 1]];
+    const pintor = pintorPatro(b, canvi);
+    const redimensiona = (R, P) => {
+      b.patro = Array.from({ length: R }, (_, r) => Array.from({ length: P }, (_, k) => (b.patro[r] && b.patro[r][k]) || 0));
+      canvi(true); pintor.pinta();
+    };
+    return [
+      h('fieldset', { class: 'camp' }, h('legend', { class: 'etiqueta' }, 'El patró'), pintor.zona),
+      segmentat('Files de quadrets', id('R'), [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']], b.patro.length, v => redimensiona(Number(v), b.patro[0].length)),
+      segmentat('Columnes del patró', id('P'), [['2', '2'], ['3', '3'], ['4', '4'], ['5', '5'], ['6', '6']], b.patro[0].length, v => redimensiona(b.patro.length, Number(v))),
+      segmentat('Vegades que surt pintat', id('model'), [['1', '1'], ['2', '2'], ['3', '3']], b.model || 2, v => { b.model = Number(v); canvi(true); }),
+      segmentat('Mida del quadret', id('cela'), [['5', '5 mm'], ['6', '6 mm'], ['7', '7 mm']], b.cela || 6, v => { b.cela = Number(v); canvi(true); }),
+      filesCamp(b, canvi, id), enunciatCamp(b, canvi, id)
+    ];
+  }
+
+  /* Editor de línies sobre la quadrícula: clica un nus i després un altre per fer una línia */
+  function editorLinies(segs, R, P, canviat) {
+    const zona = h('div', { class: 'editor-linies' });
+    let pendent = null;
+    const c = Math.min(30, 260 / Math.max(R, P));
+    const pinta = () => {
+      const svg = AT.s('svg', { viewBox: `-10 -10 ${P * c + 20} ${R * c + 20}`, width: P * c + 20, height: R * c + 20, role: 'group', 'aria-label': 'Quadrícula per dibuixar' });
+      for (let i = 0; i <= P; i++) svg.append(AT.s('line', { x1: i * c, x2: i * c, y1: 0, y2: R * c, stroke: '#d9d0d3', 'stroke-width': 1 }));
+      for (let j = 0; j <= R; j++) svg.append(AT.s('line', { x1: 0, x2: P * c, y1: j * c, y2: j * c, stroke: '#d9d0d3', 'stroke-width': 1 }));
+      segs.forEach(([a, b1, d, e]) => svg.append(AT.s('line', { x1: a * c, y1: b1 * c, x2: d * c, y2: e * c, stroke: '#2b2b2b', 'stroke-width': 3, 'stroke-linecap': 'round' })));
+      for (let i = 0; i <= P; i++) for (let j = 0; j <= R; j++) {
+        const actiu = pendent && pendent[0] === i && pendent[1] === j;
+        const nus = AT.s('circle', { cx: i * c, cy: j * c, r: actiu ? 7 : 5, fill: actiu ? '#810023' : '#9a8f93', class: 'nus', tabindex: 0, role: 'button', 'aria-label': `Nus ${i}, ${j}` });
+        const tria = () => {
+          if (!pendent) pendent = [i, j];
+          else if (pendent[0] === i && pendent[1] === j) pendent = null;
+          else { segs.push([pendent[0], pendent[1], i, j]); pendent = [i, j]; canviat(); }
+          pinta();
+        };
+        nus.addEventListener('click', tria);
+        nus.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tria(); } });
+        svg.append(nus);
+      }
+      zona.replaceChildren(svg,
+        h('p', { class: 'ajuda' }, pendent ? 'Clica el següent nus per continuar la línia, o el mateix per acabar.' : 'Clica un nus per començar una línia.'),
+        h('div', { class: 'fila-botons' },
+          h('button', { type: 'button', class: 'boto boto-petit', disabled: !segs.length, onclick: () => { segs.pop(); pendent = null; canviat(); pinta(); } }, 'Desfés'),
+          h('button', { type: 'button', class: 'boto boto-petit', disabled: !segs.length, onclick: () => { segs.length = 0; pendent = null; canviat(); pinta(); } }, 'Esborra-ho tot')));
+    };
+    pinta();
+    return zona;
+  }
+
+  function miniSanefa(def) {
+    const c = 10, svg = AT.s('svg', { viewBox: `-2 -2 ${def.P * 2 * c + 4} ${def.R * c + 4}`, class: 'mini-forma', 'aria-hidden': 'true' });
+    for (let rep = 0; rep < 2; rep++) def.seg.forEach(([a, b1, d, e]) => svg.append(AT.s('line', { x1: (rep * def.P + a) * c, y1: b1 * c, x2: (rep * def.P + d) * c, y2: e * c, stroke: 'currentColor', 'stroke-width': 2.2, 'stroke-linecap': 'round' })));
+    return svg;
+  }
+  function formQuadricula(b, fitxa, canvi) {
+    const id = k => `b${b.id}-${k}`;
+    const zonaPropia = h('div');
+    const pintaPropia = () => {
+      zonaPropia.replaceChildren();
+      if (b.sanefa !== 'propia') return;
+      if (!Array.isArray(b.segments)) b.segments = [];
+      b.R = b.R || 2; b.P = b.P || 3;
+      zonaPropia.append(
+        segmentat('Alçada (quadrets)', id('R'), [['2', '2'], ['3', '3'], ['4', '4']], b.R, v => { b.R = Number(v); canvi(true); pintaPropia(); }),
+        segmentat('Amplada d’una repetició', id('P'), [['2', '2'], ['3', '3'], ['4', '4'], ['5', '5']], b.P, v => { b.P = Number(v); canvi(true); pintaPropia(); }),
+        editorLinies(b.segments, b.R, b.P, () => canvi(true)));
+    };
+    const opcions = Object.entries(AT.detrac.SANEFES).concat([['propia', { nom: 'La meva', R: 2, P: 2, seg: [] }]]);
+    const formes = h('div', { class: 'graella-formes', role: 'radiogroup', 'aria-label': 'Sanefa' }, opcions.map(([k, d]) => [
+      h('input', { type: 'radio', name: id('san'), id: id('s-' + k), value: k, checked: b.sanefa === k, onchange: () => { b.sanefa = k; canvi(true); pintaPropia(); } }),
+      h('label', { for: id('s-' + k), class: 'forma' }, k === 'propia' ? icona('llapis', 22) : miniSanefa(d), h('span', null, d.nom))]));
+    pintaPropia();
+    return [
+      h('fieldset', { class: 'camp' }, h('legend', { class: 'etiqueta' }, 'Sanefa'), formes), zonaPropia,
+      segmentat('Vegades que surt feta', id('model'), [['1', '1'], ['2', '2'], ['3', '3']], b.model || 2, v => { b.model = Number(v); canvi(true); }),
+      segmentat('Mida del quadret', id('cela'), [['5', '5 mm'], ['6', '6 mm'], ['7', '7 mm'], ['8', '8 mm']], b.cela || 6, v => { b.cela = Number(v); canvi(true); }),
+      filesCamp(b, canvi, id), enunciatCamp(b, canvi, id)
+    ];
+  }
+
+  function formCopia(b, fitxa, canvi) {
+    const id = k => `b${b.id}-${k}`;
+    if (!Array.isArray(b.figures)) b.figures = ['casa', 'fletxa'];
+    const zona = h('div', { class: 'camps-figures' });
+    const pinta = () => {
+      const n = Number(b.parells) === 2 ? 2 : 1;
+      zona.replaceChildren(...Array.from({ length: n }, (_, i) => {
+        const f = b.figures[i];
+        const propia = f && typeof f === 'object';
+        const sel = selector(id('fig' + i), Object.entries(AT.detrac.FIGURES).map(([k, d]) => [k, d.nom]).concat([['propia', 'La meva (dibuixa-la)']]), propia ? 'propia' : f, v => {
+          b.figures[i] = v === 'propia' ? { nom: 'Pròpia', linies: [] } : v; canvi(true); pinta();
+        });
+        const segs = propia ? f.linies.map(l => [l[0][0], l[0][1], l[1][0], l[1][1]]) : null;
+        return h('div', { class: 'camp' },
+          camp(n === 2 ? `Figura ${i + 1}` : 'Figura', sel, id('fig' + i)),
+          propia ? editorLinies(segs, 8, 8, () => { f.linies = segs.map(([a, b1, d, e]) => [[a, b1], [d, e]]); canvi(true); }) : null);
+      }));
+    };
+    pinta();
+    return [
+      segmentat('Com és la graella', id('gr'), [['quadricula', 'Quadrícula'], ['punts', 'Punts (geoplà)']], b.graella || 'quadricula', v => { b.graella = v; canvi(true); }),
+      segmentat('Figures per fila', id('par'), [['1', '1 (gran)'], ['2', '2 (petites)']], b.parells || 1, v => { b.parells = Number(v); canvi(true); pinta(); }),
+      zona, filesCamp(b, canvi, id), enunciatCamp(b, canvi, id)
+    ];
+  }
+
+  function formEstret(b, fitxa, canvi) {
+    const id = k => `b${b.id}-${k}`;
+    return [
+      segmentat('Forma del camí', id('forma'), [['recte', 'Recte'], ['ona', 'Ona'], ['zigazaga', 'Ziga-zaga']], b.forma, v => { b.forma = v; canvi(true); }),
+      segmentat('Amplada a l’inici', id('g0'), [['12', '12 mm'], ['16', '16 mm'], ['20', '20 mm']], b.ampleInici || 16, v => { b.ampleInici = Number(v); canvi(true); }),
+      segmentat('Amplada al final', id('g1'), [['3', '3 mm'], ['5', '5 mm'], ['8', '8 mm']], b.ampleFinal || 5, v => { b.ampleFinal = Number(v); canvi(true); }),
+      filesCamp(b, canvi, id), enunciatCamp(b, canvi, id)
+    ];
+  }
+
   /* Dades de la portada i de la dita (fitxes amb versions) */
   function panellCompost(fitxa, canvi) {
     const d = fitxa.dades, c = AT.compostos[fitxa.compost];
@@ -469,7 +630,7 @@ window.AT = window.AT || {};
       refrescadors = [];
       llistaBlocs.replaceChildren(...fitxa.blocs.map((b, i) => {
         const obert = oberts.has(b.id);
-        const form = { fila: formFila, paraula: formParaula, grafomotricitat: formGrafo, serie: formSerie, caixa: formCaixa, text: formText, imatge: formImatge, sanefa: formSanefa, pauta: formPauta }[b.tipus] || formEspai;
+        const form = { fila: formFila, paraula: formParaula, grafomotricitat: formGrafo, serie: formSerie, voltant: formVoltant, colors: formColors, quadricula: formQuadricula, copia: formCopia, estret: formEstret, caixa: formCaixa, text: formText, imatge: formImatge, sanefa: formSanefa, pauta: formPauta }[b.tipus] || formEspai;
         const cos = h('div', { class: 'bloc-cos', id: 'cos-' + b.id, hidden: !obert }, obert ? form(b, fitxa, canvi, refrescadors) : null);
         const confirma = h('div', { class: 'confirma', hidden: true },
           h('span', null, 'Vols treure aquest bloc?'),
@@ -542,6 +703,7 @@ window.AT = window.AT || {};
           h('span', { class: 'etiqueta' }, 'Afegeix'),
           h('div', { class: 'fila-botons' },
             esCal ? [botoAfegeix('fila', 'Fila de pauta'), botoAfegeix('paraula', 'Paraules o frase')] : null,
+            fitxa.area === 'detrac' ? [botoAfegeix('voltant', 'Al voltant de punts'), botoAfegeix('colors', 'Patró de colors'), botoAfegeix('quadricula', 'Sanefa en quadrícula'), botoAfegeix('copia', 'Copia la figura'), botoAfegeix('estret', 'Camí que s’estreny'), botoAfegeix('serie', 'Sèrie de traços')] :
             fitxa.area === 'grafomotricitat' ? botoAfegeix('serie', 'Sèrie de traços') : [botoAfegeix('paraula', 'Paraules o frase'), botoAfegeix('pauta', 'Pauta buida')].filter(() => !esCal),
             botoAfegeix('caixa', 'Caixa amb text'), botoAfegeix('text', 'Text'), botoAfegeix('sanefa', 'Sanefa'),
             botoAfegeix('imatge', 'Dibuix'), botoAfegeix('espai', 'Espai per dibuixar')))));
