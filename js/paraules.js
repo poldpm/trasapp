@@ -4,7 +4,8 @@
      comença amb una cua d'entrada (un traç a part que puja des de baix), la unió la substitueix:
      va del final de la lletra anterior fins on acabava aquella cua. Si la lletra és d'un sol traç
      (e, l…), la unió arriba al punt on la seva entrada fa la mateixa alçada que la sortida anterior.
-   - Una paraula unida porta un sol punt verd (inici) i un sol punt vermell (final).
+   - Els punts verd i vermell són només per a les lletres soles: a les paraules i frases no hi van.
+   - Cada lletra és sempre igual: la unió hi entra per un punt fix de la lletra, que no depèn de l'anterior.
    - Accents: un traç curt a sobre (à è é í ò ó ú); dièresi: dos punts (ï ü).
    - Majúscules, números i signes: tipografia normal (Raleway; Raleway Dots per resseguir), de la base a la línia de dalt.
    Unitats: les de la pauta (y=0 base, y=1 alçada de la x, y=2 dalt, y=−1 baix). */
@@ -46,7 +47,21 @@ window.AT = window.AT || {};
     let maxY = -Infinity, baixada = 0;
     e.forEach(q => { maxY = Math.max(maxY, q[1]); baixada = Math.max(baixada, maxY - q[1]); });
     const esCua = tr.length > 1 && entrada !== sortida && e[e.length - 1][1] - e[0][1] > 0.3 && e[0][1] < 0.6 && baixada < 0.2;
-    return (cache[clau] = { dl, entrada, sortida, esCua });
+    /* Punt fix per on la unió entra a la lletra: no depèn mai de la lletra anterior,
+       perquè cada lletra quedi sempre igual. */
+    let qIdx = 0;
+    if (esCua) qIdx = e.length - 1;                       // la unió substitueix la cua sencera
+    else if (e[0][1] >= 0.8) qIdx = 0;                     // comença per dalt (k, z): s'hi entra pel començament
+    else {
+      let top = 0;
+      while (top + 1 < e.length && e[top + 1][1] >= e[top][1] - 0.005) top++;
+      const tornaEnrere = e[Math.min(top + 12, e.length - 1)][0] < e[top][0];
+      if (tornaEnrere) {                                   // bucles (b, e, f, h, l): a mitja alçada de l'entrada
+        const k = e.findIndex(q => q[1] >= 0.45);
+        qIdx = Math.max(0, Math.min(k < 0 ? 0 : k, top));
+      } else qIdx = top;                                   // m, n, v, w, x: al capdamunt del primer pujant
+    }
+    return (cache[clau] = { dl, entrada, sortida, esCua, qIdx });
   }
 
   function corba(P0, t0, P3, t3) {
@@ -111,14 +126,10 @@ window.AT = window.AT || {};
             g0 = Math.min(1.4, Math.max(0.5, 0.75 * (Q[0] - e[0][0])));
             tr[an.entrada] = null; // la unió substitueix la cua d'entrada
           } else {
-            let c = 0;
-            if (e[1][1] > e[0][1]) {
-              const lim = Math.floor(e.length * 0.4);
-              for (let k = 0; k < lim; k++) { if (e[k][1] >= E[1] - 0.01) { c = k; break; } c = k; }
-            }
-            Q = e[c]; tQ = dirInici(e.slice(c));
+            const c = an.qIdx;
+            Q = e[c]; tQ = c > 0 ? dirFinal(e.slice(0, c + 1)) : dirInici(e);
             tr[an.entrada] = e.slice(c);
-            g0 = 0.3 + 0.3 * Math.abs(E[1] - Q[1]);
+            g0 = 0.35 + 0.25 * Math.abs(E[1] - Q[1]);
           }
           dx = E[0] + g0 - Q[0];
           unioAmb = { E, tE, Q, tQ };
@@ -234,8 +245,7 @@ window.AT = window.AT || {};
         else grup.append(s('text', { x: X(gl.x), y: Y(0), 'font-family': 'Raleway, sans-serif', 'font-weight': 300, 'font-size': fs, fill: estat === 'gris' ? COL.repas : COL.model }, gl.ch));
       });
     }
-    g.verds.forEach(p => grup.append(s('circle', { cx: X(p[0]), cy: Y(p[1]), r: R_PUNT * 100, fill: COL.verd })));
-    g.vermells.forEach(p => grup.append(s('circle', { cx: X(p[0]), cy: Y(p[1]), r: R_PUNT * 100, fill: COL.vermell })));
+    /* Els punts verd i vermell són només per a les lletres soles: als textos no hi van. */
     return grup;
   };
 })();
