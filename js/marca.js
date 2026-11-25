@@ -1,6 +1,5 @@
 /* TRAÇApp — imatge de marca
    «TRAÇ» en majúscules sòlides + «app» amb la lletra lligada de l'escola en puntets.
-   La fletxa 1 llegeix TRAÇA (TRAÇ + la «a» de app) i la fletxa 2 llegeix APP.
    Un sol punt verd (on comença el nom) i un sol punt vermell (on acaba), com una paraula de la fitxa.
    Colors i elements del mètode: pauta Montessori, puntets, línia taronja a les «p», fletxes #1800ad. */
 window.AT = window.AT || {};
@@ -52,7 +51,7 @@ window.AT = window.AT || {};
   /* Logotip. opcions: { u: px per unitat de pauta, pauta: bool, fletxes: bool, color } */
   AT.marca = {};
   AT.marca.logo = function (o = {}) {
-    const u = o.u || 40, pauta = o.pauta !== false, fletxes = o.fletxes !== false;
+    const u = o.u || 40, pauta = o.pauta !== false, fletxes = o.fletxes === true; // sense fletxes, si no es demanen
     const color = o.color || C.granat;
     const marge = fletxes ? u * 0.95 : u * 0.12;
     const top = marge, base = top + 2 * u;
