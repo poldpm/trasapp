@@ -118,7 +118,7 @@ window.AT = window.AT || {};
           h('span', { class: 'tria-mes-text' },
             h('strong', null, nom),
             h('span', null, fs.length ? (fs.length === 1 ? '1 fitxa' : fs.length + ' fitxes') : 'Encara buit'),
-            id === actual ? h('span', { class: 'xip' }, 'Aquest mes') : null));
+            id === actual ? h('span', { class: 'xip-mes' }, 'Aquest mes') : null));
       })));
   };
 

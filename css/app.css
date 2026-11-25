@@ -62,13 +62,13 @@ h1, h2, h3 { font-family: var(--f-titol); font-weight: 600; text-wrap: balance; 
   padding-block: 8px;
 }
 .marca { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--granat); }
-.marca-nom { display: flex; align-items: center; height: 44px; font: 700 22px var(--f-titol); color: var(--granat); }
-.marca-nom svg { height: 40px; width: auto; display: block; }
+.marca-icona { display: flex; align-items: center; width: 40px; height: 40px; flex: none; }
+.marca-icona svg { width: 40px; height: 40px; display: block; }
 .portada-logo { max-width: 720px; }
 .portada-logo svg { display: block; width: 100%; height: auto; }
 .marca-escola {
   font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-2);
-  border-left: 1px solid var(--linia-forta); padding-left: 12px;
+  white-space: nowrap;
 }
 .nav-principal { display: flex; gap: 4px; }
 .nav-principal a {
@@ -415,7 +415,6 @@ h1, h2, h3 { font-family: var(--f-titol); font-weight: 600; text-wrap: balance; 
   .previa { position: static; max-height: none; }
 }
 @media (max-width: 640px) {
-  .marca-escola { display: none; }
   .nav-principal { width: 100%; justify-content: space-between; }
   .nav-principal a { padding: 10px 8px; font-size: 14px; }
   .barra-editor-dre { width: 100%; }
@@ -441,20 +440,21 @@ h1, h2, h3 { font-family: var(--f-titol); font-weight: 600; text-wrap: balance; 
 .espai-dibuix { border-width: 0.5mm; border-radius: 4mm; }
 
 /* ---------- Dossiers del mes ---------- */
-.graella-mesos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.graella-mesos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
 .tria-mes {
-  display: flex; gap: 14px; align-items: center; text-decoration: none; color: var(--tinta);
-  background: var(--paper); border: 1px solid var(--linia); border-radius: var(--r); padding: 12px;
-  transition: border-color .18s, transform .18s;
+  display: flex; flex-direction: column; align-items: center; gap: 10px; text-decoration: none; color: var(--tinta);
+  background: var(--paper); border: 1px solid var(--linia); border-radius: var(--r); padding: 14px 10px 12px;
+  transition: border-color .18s, transform .18s; min-width: 0; position: relative;
 }
 .tria-mes:hover { border-color: var(--granat); transform: translateY(-1px); }
 .tria-mes.actual { border-color: var(--granat); box-shadow: inset 0 0 0 1px var(--granat); }
-.tria-mes .mini-full { width: 92px; }
-.mes-buit { width: 92px; height: 130px; flex: none; border: 1px dashed var(--linia-forta); border-radius: 3px; background: repeating-linear-gradient(180deg, transparent 0 18px, var(--linia) 18px 19px); }
-.tria-mes-text { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; min-width: 0; }
-.tria-mes-text strong { font-family: var(--f-titol); font-weight: 600; font-size: 20px; }
+.tria-mes .mini-full, .mes-buit { width: 84px !important; height: 119px !important; }
+.tria-mes .mini-full > .full { transform: scale(0.1058) !important; }
+.mes-buit { flex: none; border: 1px dashed var(--linia-forta); border-radius: 3px; background: repeating-linear-gradient(180deg, transparent 0 18px, var(--linia) 18px 19px); }
+.tria-mes-text { display: flex; flex-direction: column; gap: 2px; align-items: center; text-align: center; min-width: 0; width: 100%; }
+.tria-mes-text strong { font-family: var(--f-titol); font-weight: 600; font-size: 19px; line-height: 1.2; overflow-wrap: anywhere; }
 .tria-mes-text span { color: var(--tinta-2); font-size: 14px; }
-.tria-mes-text .xip { color: #fff; }
+.tria-mes .xip-mes { position: absolute; top: 8px; right: 8px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--granat); color: #fff; white-space: nowrap; }
 .capcalera-dossier { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
 .capcalera-dossier .subtitol { margin: 6px 0 0; }
 .llista-dossier { display: flex; flex-direction: column; gap: 10px; }

@@ -1,6 +1,6 @@
 /* TRAÇApp — imatge de marca
    «TRAÇ» en majúscules sòlides + «app» amb la lletra lligada de l'escola en puntets.
-   Un sol punt verd (on comença el nom) i un sol punt vermell (on acaba), com una paraula de la fitxa.
+   Punt verd on comença la «a» de app i punt vermell on acaba.
    Colors i elements del mètode: pauta Montessori, puntets, línia taronja a les «p», fletxes #1800ad. */
 window.AT = window.AT || {};
 
@@ -56,7 +56,7 @@ window.AT = window.AT || {};
     const marge = fletxes ? u * 0.95 : u * 0.12;
     const top = marge, base = top + 2 * u;
     const fs = 2 * u / ratioMaj();
-    const xT = u * 0.55;                       // deixa lloc al punt verd
+    const xT = u * 0.12;
     const wT = mesura('TRAÇ', fs).width;
     const geo = AT.paraula.construeix('app');
     const geoA = AT.paraula.construeix('a');
@@ -79,9 +79,10 @@ window.AT = window.AT || {};
     const radi = Math.max(0.9, (o.radiPuntet || 0.06) * u), sep = o.separacio || 0.17;
     const posats = [];
     geo.tracos.forEach(t => puntets(t, sep, posats).forEach(q => svg.append(s('circle', { cx: AT.n(X(q[0]), 2), cy: AT.n(Y(q[1]), 2), r: AT.n(radi, 2), fill: color }))));
-    /* un sol punt verd (inici del nom) i un sol punt vermell (final) */
-    const rp = Math.max(3.4, 0.13 * u); // punts verd i vermell: visibles també en petit
-    svg.append(s('circle', { cx: xT - u * 0.28, cy: base - rp * 0.2, r: rp, fill: C.verd }));
+    /* punt verd a l'inici de la «a» de app i punt vermell al final */
+    const rp = Math.max(3.4, 0.13 * u); // visibles també en petit
+    const [gx, gy] = geo.verds[0];
+    svg.append(s('circle', { cx: X(gx), cy: Y(gy), r: rp, fill: C.verd }));
     const [vx, vy] = geo.vermells[0];
     svg.append(s('circle', { cx: X(vx), cy: Y(vy), r: rp, fill: C.vermell }));
     if (fletxes) {
@@ -120,7 +121,7 @@ window.AT = window.AT || {};
   /* Posa el logotip a la barra i la icona a la pestanya, quan les tipografies ja són a punt */
   AT.posaMarca = function () {
     const lloc = document.getElementById('logo-barra');
-    if (lloc) lloc.replaceChildren(AT.marca.logo({ u: 15, pauta: false, fletxes: false, radiPuntet: 0.09, separacio: 0.2 }));
+    if (lloc) lloc.replaceChildren(AT.marca.icona(40));
     try {
       let l = document.querySelector('link[rel="icon"]');
       if (!l) { l = document.createElement('link'); l.rel = 'icon'; document.head.append(l); }
