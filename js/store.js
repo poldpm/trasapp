@@ -66,7 +66,7 @@ window.AT = window.AT || {};
 
   AT.store = {
     persistent: () => persistent,
-    fitxes: () => dades.fitxes.slice().sort((a, b) => b.modificat - a.modificat),
+    fitxes: () => dades.fitxes.filter(f => !f.proposta).sort((a, b) => b.modificat - a.modificat),
     fitxa: id => dades.fitxes.find(f => f.id === id) || null,
     config: () => dades.config,
     desaConfig(canvis) { Object.assign(dades.config, canvis); return escriu(); },
@@ -118,11 +118,47 @@ window.AT = window.AT || {};
 
     /* Fitxes d'un dossier (curs + mes), en l'ordre del dossier */
     dossier(curs, mes) {
-      return dades.fitxes.filter(f => f.curs === curs && f.mes === mes && !f.esborrany).sort((a, b) => (a.ordre || 0) - (b.ordre || 0) || a.creat - b.creat);
+      return dades.fitxes.filter(f => f.curs === curs && f.mes === mes && !f.esborrany && !f.proposta).sort((a, b) => (a.ordre || 0) - (b.ordre || 0) || a.creat - b.creat);
     },
     mouEnDossier(id, d) {
       const f = this.fitxa(id); if (!f) return;
       const llista = this.dossier(f.curs, f.mes);
+      llista.forEach((x, i) => { x.ordre = i + 1; });
+      const i = llista.indexOf(f), j = i + d;
+      if (j < 0 || j >= llista.length) return;
+      [llista[i].ordre, llista[j].ordre] = [llista[j].ordre, llista[i].ordre];
+      escriu();
+    },
+
+    /* «Dossier TRAÇApp»: el dossier ja fet de cada mes. Es crea la primera vegada que s'obre
+       i després es desa com qualsevol fitxa, amb els canvis que hi facin les mestres. */
+    proposta(curs, mes) {
+      return dades.fitxes.filter(f => f.proposta && f.curs === curs && f.mes === mes).sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
+    },
+    generaProposta(curs, mes) {
+      dades.fitxes = dades.fitxes.filter(f => !(f.proposta && f.curs === curs && f.mes === mes));
+      const noves = AT.dossierApp(curs, mes);
+      dades.fitxes.push(...noves);
+      escriu();
+      return noves;
+    },
+    /* Copia les fitxes del dossier TRAÇApp al dossier propi del mes, al final */
+    copiaProposta(curs, mes, ids) {
+      let ordre = Math.max(0, ...this.dossier(curs, mes).map(f => f.ordre || 0));
+      const fets = this.proposta(curs, mes).filter(f => !ids || ids.includes(f.id)).map(o => {
+        const c = AT.clona(o);
+        c.id = AT.uid(); delete c.proposta;
+        c.creat = c.modificat = Date.now(); c.ordre = ++ordre;
+        c.blocs.forEach(b => { b.id = AT.uid(); });
+        return c;
+      });
+      dades.fitxes.push(...fets);
+      escriu();
+      return fets.length;
+    },
+    mouProposta(id, d) {
+      const f = this.fitxa(id); if (!f) return;
+      const llista = this.proposta(f.curs, f.mes);
       llista.forEach((x, i) => { x.ordre = i + 1; });
       const i = llista.indexOf(f), j = i + d;
       if (j < 0 || j >= llista.length) return;

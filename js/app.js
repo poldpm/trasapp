@@ -22,7 +22,10 @@
   function navega() {
     const r = location.hash.slice(1);
     if (!r.startsWith('fitxa-')) AT.store.netejaEsborranys();
+    AT.tancaDossierApp();
     vista.replaceChildren(ruta());
+    const [curs, mes, extra] = r.split('-');
+    if (extra === 'app' && AT.config.cursos[curs]) AT.obreDossierApp(curs, mes);
     document.querySelectorAll('.nav-principal a').forEach(a => {
       const actiu = a.getAttribute('href') === '#' + (r || 'inici');
       if (actiu) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');

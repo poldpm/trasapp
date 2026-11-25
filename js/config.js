@@ -4,7 +4,7 @@
 window.AT = window.AT || {};
 
 AT.config = {
-  versio: '0.5',
+  versio: '0.6',
 
   /* Versió de la q: 'q' (proposta de la directora) o 'q_cua' (la q amb cua).
      Pendent de decisió de l'escola: de moment, la de la directora. */

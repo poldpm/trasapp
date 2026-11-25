@@ -69,10 +69,23 @@ window.AT = window.AT || {};
   }
 
   /* ---------- Peces compartides: imatge i sanefa ---------- */
-  function pujaImatge(obj, clau, idf, text, canvi) {
+  /* Dibuixos de TRAÇApp per triar sense haver de pujar res */
+  function galeriaDibuixos(petits, tria) {
+    const claus = Object.keys(AT.dibuixos).filter(k => !!AT.dibuixos[k].petit === petits)
+      .concat(petits ? [] : ['flor', 'floc', 'estrella', 'cor', 'sol', 'fulla'].map(t => 'mandala-' + t));
+    return h('details', { class: 'galeria-dibuixos' },
+      h('summary', null, 'O tria un dibuix de TRAÇApp'),
+      h('div', { class: 'galeria-graella' }, claus.map(k => {
+        const nom = k.startsWith('mandala-') ? 'Mandala (' + k.slice(8) + ')' : AT.dibuixos[k].nom;
+        return h('button', { type: 'button', class: 'galeria-item', title: nom, 'aria-label': nom, onclick: () => tria('img:' + k) },
+          h('img', { src: AT.srcImatge('img:' + k), alt: '' }));
+      })));
+  }
+
+  function pujaImatge(obj, clau, idf, text, canvi, petits = false) {
     const zona = h('div', { class: 'imatge-camp' });
     const pinta = () => zona.replaceChildren(
-      obj[clau] ? h('img', { src: obj[clau], alt: '' }) : h('span', { class: 'imatge-buida' }, icona('imatge', 22)),
+      obj[clau] ? h('img', { src: AT.srcImatge(obj[clau]), alt: '' }) : h('span', { class: 'imatge-buida' }, icona('imatge', 22)),
       h('div', { class: 'imatge-accions' },
         h('span', { class: 'etiqueta' }, text),
         h('label', { class: 'boto boto-petit', for: idf }, obj[clau] ? 'Canvia' : 'Puja una imatge'),
@@ -83,7 +96,8 @@ window.AT = window.AT || {};
             catch (err) { AT.avis(err.message, 'error'); }
           }
         }),
-        obj[clau] ? h('button', { type: 'button', class: 'boto boto-petit', onclick: () => { obj[clau] = null; canvi(true); pinta(); } }, 'Treu') : null));
+        obj[clau] ? h('button', { type: 'button', class: 'boto boto-petit', onclick: () => { obj[clau] = null; canvi(true); pinta(); } }, 'Treu') : null),
+      galeriaDibuixos(petits, v => { obj[clau] = v; canvi(true); pinta(); }));
     pinta();
     return zona;
   }
@@ -98,7 +112,7 @@ window.AT = window.AT || {};
           h('label', { for: id('f-' + k), class: 'forma' }, AT.motor.miniForma(k), h('span', null, f.nom))]));
       zona.replaceChildren(
         segmentat('Què hi ha a la sanefa', id('mode'), [['forma', 'Un traç'], ['imatge', 'Un dibuixet']], sf.modeSanefa || 'forma', v => { sf.modeSanefa = v; canvi(true); pinta(); }),
-        sf.modeSanefa === 'imatge' ? pujaImatge(sf, 'imatge', id('img'), 'Dibuixet que es repeteix', canvi) : formes,
+        sf.modeSanefa === 'imatge' ? pujaImatge(sf, 'imatge', id('img'), 'Dibuixet que es repeteix', canvi, true) : formes,
         segmentat('Quants en fa de model', id('model'), [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']], sf.model || 2, v => { sf.model = Number(v); canvi(true); }),
         segmentat('La resta', id('resta'), sf.modeSanefa === 'imatge'
           ? [['puntets', 'Molt clara'], ['buit', 'En blanc']]
@@ -560,7 +574,7 @@ window.AT = window.AT || {};
   }
 
   /* ---------- Editor ---------- */
-  AT.vistes.editor = function (idFitxa) {
+  AT.vistes.editor = function (idFitxa, opts = {}) {
     const fitxa = AT.store.fitxa(idFitxa);
     if (!fitxa) return AT.vistes.noTrobat('Aquesta fitxa no existeix o s’ha esborrat.');
     AT.store.netejaEsborranys(fitxa.id);
@@ -608,9 +622,11 @@ window.AT = window.AT || {};
     /* Panell de blocs */
     const llistaBlocs = h('div', { class: 'blocs' });
     let refrescadors = []; // parts del panell que depenen de les lletres, la mida o el text
+    const avisaFora = opts.quanCanvia ? AT.debounce(opts.quanCanvia, 600) : null;
     const canvi = (estructural) => {
       fitxa.esborrany = false;
       desa();
+      if (avisaFora) avisaFora();
       pintaDiferit();
       if (estructural) { refrescaResums(); refrescadors.forEach(f => f()); }
     };
@@ -678,7 +694,7 @@ window.AT = window.AT || {};
     const panellCap = h('section', { class: 'panell-seccio' },
       h('h2', { class: 'panell-titol' }, 'Capçalera'),
       camp('Títol de la fitxa', entradaTitol, idT, fitxa.titolAuto ? 'Es posa sol amb les lletres de la fitxa fins que l’escrius tu.' : null),
-      segmentat('Curs', 'fitxa-curs', [['primer', '1r'], ['segon', '2n']], fitxa.curs, v => { fitxa.curs = v; canvi(true); pintaBlocs(); actualitzaMolles(); }),
+      opts.incrustat ? null : segmentat('Curs', 'fitxa-curs', [['primer', '1r'], ['segon', '2n']], fitxa.curs, v => { fitxa.curs = v; canvi(true); pintaBlocs(); actualitzaMolles(); }),
       fitxa.compost ? null : casella('fitxa-cap', 'Capçalera de l’escola (logotip, Nom i Data)', fitxa.capcalera !== false, v => { fitxa.capcalera = v; canvi(true); }));
 
     const esCal = fitxa.area === 'caligrafia' && !!fitxa.lletres;
@@ -728,11 +744,12 @@ window.AT = window.AT || {};
       AT.imprimeix(fitxa);
     };
     const barra = h('div', { class: 'barra-editor' },
-      h('div', { class: 'barra-editor-esq' }, zonaMolles, estat),
+      h('div', { class: 'barra-editor-esq' }, opts.incrustat ? h('h3', { class: 'titol-incrustat' }, fitxa.titol) : zonaMolles, estat),
       h('div', { class: 'barra-editor-dre' },
-        h('button', { type: 'button', class: 'boto', onclick: () => { const c = AT.store.duplica(fitxa.id); if (c) { AT.avis('Còpia creada'); location.hash = 'fitxa-' + c.id; } } }, icona('copia', 18), 'Duplica'),
-        h('button', { type: 'button', class: 'boto', onclick: () => { confirmaEsb.hidden = false; } }, icona('paperera', 18), 'Esborra'),
-        h('button', { type: 'button', class: 'boto boto-primari', onclick: imprimeix }, icona('impressora', 18), 'Imprimeix o desa en PDF')),
+        opts.incrustat ? null : [
+          h('button', { type: 'button', class: 'boto', onclick: () => { const c = AT.store.duplica(fitxa.id); if (c) { AT.avis('Còpia creada'); location.hash = 'fitxa-' + c.id; } } }, icona('copia', 18), 'Duplica'),
+          h('button', { type: 'button', class: 'boto', onclick: () => { confirmaEsb.hidden = false; } }, icona('paperera', 18), 'Esborra')],
+        h('button', { type: 'button', class: opts.incrustat ? 'boto' : 'boto boto-primari', onclick: imprimeix }, icona('impressora', 18), opts.incrustat ? 'Imprimeix aquesta fitxa' : 'Imprimeix o desa en PDF')),
       confirmaEsb,
       AT.dinsMarc ? h('p', { class: 'nota-marc' }, 'En aquesta previsualització el navegador no deixa imprimir. Obre l’app des de la seva adreça pròpia per imprimir o desar en PDF.') : null);
 
@@ -759,13 +776,16 @@ window.AT = window.AT || {};
 
   /* Imprimeix totes les fitxes d'un dossier, en ordre */
   AT.imprimeixDossier = function (curs, mes) {
+    AT.imprimeixFitxes(AT.store.dossier(curs, mes), `Dossier - ${AT.nomMes(mes)} - ${C.cursos[curs].curt}`);
+  };
+  AT.imprimeixFitxes = function (fitxes, titol) {
     const zona = document.getElementById('impressio');
     const fulls = [];
-    AT.store.dossier(curs, mes).forEach(f => fulls.push(...AT.motor.fulls(f).fulls));
+    fitxes.forEach(f => fulls.push(...AT.motor.fulls(f).fulls));
     if (!fulls.length) return;
     zona.replaceChildren(...fulls);
     const titolAnterior = document.title;
-    document.title = `Dossier - ${AT.nomMes(mes)} - ${C.cursos[curs].curt}`;
+    document.title = titol;
     const neteja = () => { document.title = titolAnterior; zona.replaceChildren(); window.removeEventListener('afterprint', neteja); };
     window.addEventListener('afterprint', neteja);
     setTimeout(() => window.print(), 60);

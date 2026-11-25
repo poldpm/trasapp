@@ -142,7 +142,7 @@ window.AT = window.AT || {};
         for (let i = 0; i < n; i++) {
           const visible = i < model;
           if (!visible && bloc.resta === 'buit') continue;
-          svg.append(s('image', { href: bloc.imatge, x: pad + i * pas, y: y + pad, width: mida, height: mida, preserveAspectRatio: 'xMidYMid meet', opacity: visible ? 1 : 0.28 }));
+          svg.append(s('image', { href: AT.srcImatge(bloc.imatge), x: pad + i * pas, y: y + pad, width: mida, height: mida, preserveAspectRatio: 'xMidYMid meet', opacity: visible ? 1 : 0.28 }));
         }
         return svg;
       }

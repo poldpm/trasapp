@@ -516,3 +516,78 @@ h1, h2, h3 { font-family: var(--f-titol); font-weight: 600; text-wrap: balance; 
 .camps-figures { display: flex; flex-direction: column; gap: 14px; }
 .tria-model-text .dificultat { margin-bottom: 2px; }
 @media (max-width: 640px) { .tria-detrac { flex-wrap: wrap; } }
+
+/* ---------- Dossier TRAÇApp ---------- */
+.botons-dossier { display: flex; flex-wrap: wrap; gap: 8px; }
+.boto-app { gap: 10px; padding-left: 8px; text-decoration: none; border-color: var(--granat); color: var(--granat); font-weight: 700; }
+.boto-app .icona-tracapp { width: 26px; height: 26px; flex: none; }
+.amb-modal, .amb-modal body { overflow: hidden; }
+.modal-app {
+  position: fixed; inset: 0; z-index: 50; background: rgba(30, 20, 24, .45);
+  display: flex; padding: max(12px, env(safe-area-inset-top, 0px)) 12px 12px; outline: none;
+}
+.finestra-app {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--fons);
+  border-radius: 14px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+.cap-app {
+  background: var(--paper); border-bottom: 1px solid var(--linia); padding: 14px 18px;
+  display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between;
+}
+.cap-app-marca { display: flex; gap: 14px; align-items: flex-start; min-width: 0; flex: 1 1 420px; }
+.cap-app-marca .icona-tracapp { flex: none; border-radius: 10px; }
+.cap-app-titol { margin: 0; font-size: 20px; line-height: 1.2; }
+.cap-app-sub { margin: 4px 0 0; font-size: 14px; color: var(--tinta); }
+.cap-app-nota { margin: 2px 0 0; font-size: 13px; color: var(--tinta-2); }
+.cap-app-accions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.boto-tanca { margin-left: 4px; }
+.cap-app .confirma, .cap-app .nota-marc { width: 100%; }
+.cos-app { flex: 1; min-height: 0; display: grid; grid-template-columns: 270px minmax(0, 1fr); overflow: hidden; }
+.llista-app { overflow: auto; border-right: 1px solid var(--linia); background: var(--paper); padding: 10px; }
+.pagines-app { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pagina-app { border: 1px solid transparent; border-radius: 10px; display: flex; flex-direction: column; }
+.pagina-app.actual { border-color: var(--granat); background: var(--granat-suau); }
+.pagina-app-boto {
+  display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 8px; text-align: left;
+  cursor: pointer; border-radius: 10px; min-width: 0; font: inherit; color: inherit;
+}
+.pagina-app-boto:hover { background: var(--fons); }
+.pagina-app.actual .pagina-app-boto:hover { background: transparent; }
+.pagina-app-num {
+  width: 24px; height: 24px; flex: none; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--granat-suau); color: var(--granat); font-weight: 700; font-size: 13px;
+}
+.pagina-app.actual .pagina-app-num { background: var(--granat); color: #fff; }
+.pagina-app-boto .mini-full { flex: none; box-shadow: 0 0 0 1px var(--linia); background: #fff; overflow: hidden; display: block; }
+.pagina-app-text { display: flex; flex-direction: column; min-width: 0; }
+.pagina-app-text strong { font-size: 14px; line-height: 1.25; overflow-wrap: break-word; hyphens: auto; }
+.pagina-app-text span { font-size: 12px; color: var(--tinta-2); }
+.pagina-app-accions { display: none; justify-content: flex-end; padding: 0 6px 6px; }
+.pagina-app.actual .pagina-app-accions { display: flex; }
+.principal-app { overflow: auto; padding: 14px 18px 24px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.nav-pagines-app { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.nav-pagines-n { font-weight: 600; font-size: 14px; color: var(--tinta-2); }
+.titol-incrustat { margin: 0; font-size: 18px; }
+.modal-app .previa { top: 0; max-height: calc(100vh - 230px); }
+.galeria-dibuixos summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--granat); min-height: 36px; display: flex; align-items: center; }
+.galeria-graella { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; padding-top: 6px; }
+.galeria-item { aspect-ratio: 1; background: #fff; border: 1px solid var(--linia); border-radius: 8px; padding: 4px; cursor: pointer; }
+.galeria-item:hover { border-color: var(--granat); }
+.galeria-item img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.imatge-camp { flex-wrap: wrap; }
+@media (max-width: 1000px) {
+  .modal-app .previa { max-height: none; }
+}
+@media (max-width: 800px) {
+  .modal-app { padding: 0; }
+  .finestra-app { border-radius: 0; }
+  .finestra-app { overflow: auto; }
+  .cos-app { display: block; overflow: visible; }
+  .llista-app { border-right: 0; border-bottom: 1px solid var(--linia); overflow-x: auto; overflow-y: hidden; }
+  .pagines-app { flex-direction: row; }
+  .pagina-app { flex: none; width: 190px; }
+  .principal-app { overflow: visible; padding: 12px; }
+  .cap-app { padding: 12px; }
+  .cap-app-accions { width: 100%; }
+  .cap-app-accions .boto-primari { flex: 1 1 100%; }
+}

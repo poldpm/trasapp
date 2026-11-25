@@ -394,8 +394,8 @@ window.AT = window.AT || {};
       if (bloc.guies === 'linies') {
         [y0, y0 + a].forEach(y => svg.append(s('line', { x1: x0 - 2, x2: x1 + 2, y1: y, y2: y, stroke: '#9a9a9a', 'stroke-width': 0.22 })));
       }
-      if (teIni) svg.append(s('image', { href: bloc.imatgeInici, x: pad, y: yc - img / 2, width: img, height: img, preserveAspectRatio: 'xMidYMid meet' }));
-      if (teFi) svg.append(s('image', { href: bloc.imatgeFinal, x: W - pad - img, y: yc - img / 2, width: img, height: img, preserveAspectRatio: 'xMidYMid meet' }));
+      if (teIni) svg.append(s('image', { href: AT.srcImatge(bloc.imatgeInici), x: pad, y: yc - img / 2, width: img, height: img, preserveAspectRatio: 'xMidYMid meet' }));
+      if (teFi) svg.append(s('image', { href: AT.srcImatge(bloc.imatgeFinal), x: W - pad - img, y: yc - img / 2, width: img, height: img, preserveAspectRatio: 'xMidYMid meet' }));
 
       const niv = nivellAjuda(bloc.ajuda, r, N);
       const model = (d, extra) => svg.append(s('path', Object.assign({ d, fill: 'none', stroke: NEGRE, 'stroke-width': 0.6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, extra)));
@@ -479,8 +479,11 @@ window.AT = window.AT || {};
     fitxa.blocs.forEach((bloc, bi) => {
       const m = motors[bi];
       /* La ç va sola en una pàgina (norma de l'escola) */
-      if (pag.tancada || (m && m.solaEnPagina && pag.items.length)) pag = nova();
-      if (m && m.solaEnPagina) pag.tancada = true;
+      /* la ç pot tenir diverses files al seu full, però cap altra lletra ni bloc */
+      const esC = !!(m && m.solaEnPagina);
+      const ocupada = pag.items.some(it => it.tipus !== 'mostra');
+      if ((pag.tancada && !esC) || (esC && ocupada && !pag.tancada)) pag = nova();
+      if (esC) pag.tancada = true;
       const sep = pag.items.length ? ENTRE_BLOCS : 0;
       const enun = bloc.enunciat && bloc.enunciat.trim() ? ENUNCIAT : 0;
       if (bloc.tipus === 'espai' || bloc.tipus === 'imatge') {
@@ -584,7 +587,7 @@ window.AT = window.AT || {};
           cos.append(h('div', { class: 'espai-dibuix', style: { height: it.alt + 'mm' } }));
         } else if (it.tipus === 'imatge') {
           cos.append(h('div', { class: 'imatge-bloc', style: { height: it.alt + 'mm' } },
-            it.bloc.src ? h('img', { src: it.bloc.src, alt: '' }) : h('span', { class: 'nomes-pantalla imatge-buida-full' }, 'Aquí anirà el dibuix. Puja’l des de l’editor.')));
+            it.bloc.src ? h('img', { src: AT.srcImatge(it.bloc.src), alt: '' }) : h('span', { class: 'nomes-pantalla imatge-buida-full' }, 'Aquí anirà el dibuix. Puja’l des de l’editor.')));
         }
       });
       full.append(cos);

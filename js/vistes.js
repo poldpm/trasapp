@@ -199,6 +199,7 @@ window.AT = window.AT || {};
   AT.vistes.dossier = function (cursId, mesId) {
     const c = C.cursos[cursId], nomMes = AT.nomMes(mesId);
     const llista = h('div', { class: 'llista-dossier' });
+    const ambApp = AT.hiHaDossierApp(cursId, mesId);
     const pinta = () => {
       const fs = AT.store.dossier(cursId, mesId);
       llista.replaceChildren(...(fs.length ? fs.map((f, i) => {
@@ -220,10 +221,12 @@ window.AT = window.AT || {};
               h('button', { class: 'boto-icona', type: 'button', title: 'Duplica', 'aria-label': 'Duplica ' + f.titol, onclick: () => { AT.store.duplica(f.id); AT.avis('Fitxa duplicada'); pinta(); } }, icona('copia', 18)),
               h('button', { class: 'boto-icona', type: 'button', title: 'Esborra', 'aria-label': 'Esborra ' + f.titol, onclick: () => { confirma.hidden = false; } }, icona('paperera', 18))),
             confirma));
-      }) : [h('p', { class: 'buit' }, `El dossier de ${nomMes.toLowerCase()} encara és buit. Afegeix-hi la primera fitxa a sota.`)]));
+      }) : [h('p', { class: 'buit' }, `El dossier de ${nomMes.toLowerCase()} encara és buit. Afegeix-hi la primera fitxa a sota`,
+        ambApp ? [' o obre el ', h('a', { href: `#${cursId}-${mesId}-app` }, 'Dossier TRAÇApp'), ', que ja és fet.'] : '.')]));
       boto.disabled = !fs.length;
     };
     const boto = h('button', { type: 'button', class: 'boto boto-primari', onclick: () => AT.imprimeixDossier(cursId, mesId) }, icona('impressora', 18), 'Imprimeix el dossier');
+    const botoApp = ambApp ? h('a', { class: 'boto boto-app', href: `#${cursId}-${mesId}-app`, title: 'Un dossier d’aquest mes ja fet per TRAÇApp, per revisar i imprimir' }, AT.marca.icona(24), 'Dossier TRAÇApp') : null;
     pinta();
     return h('div', { class: 'vista' },
       molles([{ ruta: 'inici', text: 'Inici' }, { ruta: cursId, text: c.nom }, { text: nomMes }]),
@@ -231,7 +234,7 @@ window.AT = window.AT || {};
         h('div', null, h('h1', { class: 'titol-vista' }, `${nomMes} · ${c.curt}`), h('p', { class: 'subtitol' }, mesId === 'detrac'
           ? 'Grafomotricitat fora dels dossiers del mes. Les estrelles indiquen la dificultat, només com a referència.'
           : 'Les fitxes del dossier, en l’ordre en què s’imprimeixen.')),
-        boto),
+        h('div', { class: 'botons-dossier' }, botoApp, boto)),
       llista,
       h('section', { class: 'seccio' },
         h('h2', { class: 'titol-seccio' }, 'Afegeix una fitxa'),
