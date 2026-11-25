@@ -139,28 +139,14 @@ AT.models = {
   ],
   caligrafia: [
     {
-      id: 'lletra', nom: 'Una lletra',
-      text: 'Mostra amb fletxes, files amb model i puntets, files amb gris i files amb només els punts.',
+      id: 'lletres', nom: 'Lletres',
+      text: 'Tria una lletra o més. Mostra amb fletxes a dalt i, per a cada lletra, una fila amb model i puntets i files amb només els punts.',
       crea: c => ({
         lletres: [c.mostres.lletra],
-        blocs: [
-          { tipus: 'fila', lletra: '@0', columnes: ['model', 'puntets'], files: 1, enunciat: 'Ressegueix i escriu.' },
-          { tipus: 'fila', lletra: '@0', columnes: ['model', 'gris', 'punts'], files: 1 },
-          { tipus: 'fila', lletra: '@0', columnes: ['punts'], files: 'auto' }
-        ]
-      })
-    },
-    {
-      id: 'dues-lletres', nom: 'Dues lletres',
-      text: 'Mostra de les dues lletres i, a sota, les files de cada una.',
-      crea: c => ({
-        lletres: [c.mostres.lletra, c.mostres.segona],
         mostra: { mida: 'mitjana' },
         blocs: [
           { tipus: 'fila', lletra: '@0', columnes: ['model', 'puntets'], files: 1, mida: 'mitjana', enunciat: 'Ressegueix i escriu.' },
-          { tipus: 'fila', lletra: '@0', columnes: ['model', 'punts'], files: 1, mida: 'mitjana' },
-          { tipus: 'fila', lletra: '@1', columnes: ['model', 'puntets'], files: 1, mida: 'mitjana' },
-          { tipus: 'fila', lletra: '@1', columnes: ['model', 'punts'], files: 'auto', mida: 'mitjana' }
+          { tipus: 'fila', lletra: '@0', columnes: ['punts'], files: 'auto', mida: 'mitjana' }
         ]
       })
     },
