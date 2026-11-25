@@ -1,4 +1,4 @@
-/* Art del traç — paraules i frases amb la lletra lligada de l'escola
+/* TRAÇApp — paraules i frases amb la lletra lligada de l'escola
    - Les lletres surten dels traços validats (dades/lletres.json), sense tocar-los.
    - Unions: la mateixa lògica que la «qu» de la comparativa de l'escola. Si la lletra següent
      comença amb una cua d'entrada (un traç a part que puja des de baix), la unió la substitueix:

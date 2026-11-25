@@ -1,4 +1,6 @@
-# Art del traç
+# TRAÇApp
+
+**TRAÇ** + **TRAÇA** + **APP**.
 
 App web per preparar les fitxes de cal·ligrafia i grafomotricitat de 1r i 2n de primària (Vedruna Escorial Vic), amb el format de la «Plantilla fitxes» oficial i a punt per imprimir en A4.
 

@@ -1,4 +1,4 @@
-/* Art del traç — desament local (al navegador d'aquest ordinador)
+/* TRAÇApp — desament local (al navegador d'aquest ordinador)
    Les fitxes es guarden a localStorage. Si el navegador no ho permet
    (finestra privada, dades bloquejades) l'app continua funcionant en memòria. */
 window.AT = window.AT || {};
@@ -118,11 +118,11 @@ window.AT = window.AT || {};
     },
 
     exporta() {
-      return JSON.stringify({ app: 'art-del-trac', versio: AT.config.versio, exportat: new Date().toISOString(), fitxes: dades.fitxes }, null, 1);
+      return JSON.stringify({ app: 'tracapp', versio: AT.config.versio, exportat: new Date().toISOString(), fitxes: dades.fitxes }, null, 1);
     },
     importa(text) {
       const d = JSON.parse(text);
-      if (!d || !Array.isArray(d.fitxes)) throw new Error('Aquest fitxer no conté fitxes d’Art del traç.');
+      if (!d || !Array.isArray(d.fitxes)) throw new Error('Aquest fitxer no conté fitxes de TRAÇApp.');
       let n = 0;
       d.fitxes.forEach(f => {
         if (!f || !f.id || !Array.isArray(f.blocs)) return;

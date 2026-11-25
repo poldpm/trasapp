@@ -1,4 +1,4 @@
-/* Art del traç — configuració general
+/* TRAÇApp — configuració general
    Tot el que és "de l'escola" (cursos, mides, models de partida) viu aquí,
    perquè es pugui ajustar sense tocar la lògica de l'app. */
 window.AT = window.AT || {};

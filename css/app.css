@@ -1,4 +1,4 @@
-/* Art del traç — estils
+/* TRAÇApp — estils
    Concepte: l'app és un full de pauta. Blanc de paper, línies fines i el granat
    de l'escola com a tinta; la lletra lligada només apareix on parla de cal·ligrafia. */
 :root {
@@ -17,7 +17,6 @@
 
   --f-titol: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
   --f-text: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --f-lligada: "Playwrite ES", "Segoe Script", cursive;
   --f-fitxa: "Nunito", "Figtree", system-ui, sans-serif;
 
   --r: 10px;
@@ -62,8 +61,11 @@ h1, h2, h3 { font-family: var(--f-titol); font-weight: 600; text-wrap: balance; 
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 8px;
 }
-.marca { display: flex; align-items: baseline; gap: 12px; text-decoration: none; color: var(--granat); }
-.marca-nom { font-family: var(--f-lligada); font-size: 19px; font-weight: 300; line-height: 1.9; }
+.marca { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--granat); }
+.marca-nom { display: flex; align-items: center; height: 44px; font: 700 22px var(--f-titol); color: var(--granat); }
+.marca-nom svg { height: 40px; width: auto; display: block; }
+.portada-logo { max-width: 720px; }
+.portada-logo svg { display: block; width: 100%; height: auto; }
 .marca-escola {
   font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-2);
   border-left: 1px solid var(--linia-forta); padding-left: 12px;
@@ -105,14 +107,13 @@ h1, h2, h3 { font-family: var(--f-titol); font-weight: 600; text-wrap: balance; 
 
 /* ---------- Pauta titular ---------- */
 .pauta-titol { display: block; width: 100%; height: auto; overflow: visible; }
-.pauta-titol text { font-family: var(--f-lligada); }
+.pauta-titol text { font-family: var(--f-titol); font-weight: 700; }
 .pt-ext { stroke: var(--linia-forta); stroke-width: 0.22; }
 .pt-int { stroke: var(--granat); stroke-opacity: 0.42; stroke-width: 0.3; }
 .pt-model { fill: var(--granat); }
 .pt-punts { fill: none; stroke: var(--granat); stroke-width: 0.34; stroke-dasharray: 0.02 0.95; stroke-linecap: round; }
 
 .portada { display: flex; flex-direction: column; gap: 18px; padding-block: 12px 8px; }
-.portada-pauta { max-width: 760px; }
 .portada-text { margin: 0; font-size: 19px; max-width: 34em; color: var(--tinta-2); }
 
 /* ---------- Tria de curs ---------- */

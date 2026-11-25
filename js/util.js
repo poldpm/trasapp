@@ -1,4 +1,4 @@
-/* Art del traç — utilitats compartides */
+/* TRAÇApp — utilitats compartides */
 window.AT = window.AT || {};
 
 (function () {

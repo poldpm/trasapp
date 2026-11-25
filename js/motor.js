@@ -1,4 +1,4 @@
-/* Art del traç — motor de fitxes
+/* TRAÇApp — motor de fitxes
    Converteix una fitxa (llista de blocs) en fulls A4 a mida real (mm).
    - Cal·ligrafia: pauta Montessori de l'escola + les lletres pròpies de l'escola
      (js/lletres-dades.js, generat de dades/lletres.json). No s'hi fa servir cap tipografia.
@@ -9,40 +9,23 @@ window.AT = window.AT || {};
 
 (function () {
   const { h, s } = AT;
-  const FONT = '"Playwrite ES"'; // només per a la marca de l'app, mai a les fitxes
   const NEGRE = '#111111';
   const PUNTS = '#333333';
 
   /* ---------- Tipografies ---------- */
-  const metr = { x: 0.5, carregada: false };
-  const ctx = document.createElement('canvas').getContext('2d');
-
   AT.lletra = {
     async carrega() {
       try {
         await Promise.all([
-          document.fonts.load(`300 100px ${FONT}`, 'Art del traç'),
-          document.fonts.load(`100 100px ${FONT}`, 'Art del traç'),
+          document.fonts.load('700 100px "Bricolage Grotesque"', 'TRAÇApp 12'),
           document.fonts.load('700 16px Nunito'),
-          document.fonts.load('300 16px Nunito', 'ABC123'),
           document.fonts.load('400 16px Nunito'),
+          document.fonts.load('300 16px Nunito', 'ABC123'),
           document.fonts.load('500 16px Poppins', '0123456789')
         ]);
-      } catch (e) { /* sense xarxa: es fa servir la mètrica aproximada */ }
+      } catch (e) { /* sense xarxa: es fan servir les tipografies de recanvi */ }
       if (AT.paraulaMetrica) AT.paraulaMetrica();
-      ctx.font = `300 100px ${FONT}`;
-      const m = ctx.measureText('x');
-      if (document.fonts.check(`300 100px ${FONT}`) && m.actualBoundingBoxAscent > 10) {
-        metr.x = m.actualBoundingBoxAscent / 100;
-        metr.carregada = true;
-      }
-      return metr.carregada;
-    },
-    carregada: () => metr.carregada,
-    midaPerFranja: b => b / metr.x,
-    amplada(text, mida, pes = 300) {
-      ctx.font = `${pes} 100px ${FONT}`;
-      return ctx.measureText(text).width / 100 * mida;
+      return document.fonts.check('700 16px "Bricolage Grotesque"');
     }
   };
 

@@ -1,4 +1,4 @@
-/* Art del traç — editor de fitxes */
+/* TRAÇApp — editor de fitxes */
 window.AT = window.AT || {};
 
 (function () {

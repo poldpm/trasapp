@@ -1,4 +1,4 @@
-/* Art del traç — pantalles de l'aplicació */
+/* TRAÇApp — pantalles de l'aplicació */
 window.AT = window.AT || {};
 
 (function () {
@@ -13,22 +13,19 @@ window.AT = window.AT || {};
         i < passos.length - 1 ? h('a', { href: '#' + p.ruta }, p.text) : h('span', { 'aria-current': 'page' }, p.text)))));
   }
 
-  /* Pauta Montessori amb text en lletra lligada (signatura visual de l'app) */
+  /* Número de curs sobre una pauta Montessori (les xifres arriben a la línia de dalt) */
   function pautaTitol(parts, opts = {}) {
     const b = opts.franja || 10, W = opts.amplada || 220;
-    const fs = AT.lletra.midaPerFranja(b);
+    const ctx = document.createElement('canvas').getContext('2d');
+    ctx.font = '700 100px "Bricolage Grotesque"';
+    const ratio = (ctx.measureText('H').actualBoundingBoxAscent || 70) / 100;
+    const fs = 2 * b / ratio;
     const H = b * 3 + 4;
     const svg = s('svg', { class: 'pauta-titol ' + (opts.class || ''), viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': parts.map(p => p.t).join('') });
     const y0 = 2;
     [[0, 'ext'], [b, 'int'], [2 * b, 'int'], [3 * b, 'ext']].forEach(([y, t]) =>
       svg.append(s('line', { x1: 0, x2: W, y1: y0 + y, y2: y0 + y, class: 'pt-' + t })));
-    let x = opts.x || 3;
-    parts.forEach(p => {
-      const pes = p.punts ? 100 : 300;
-      const el = s('text', { x, y: y0 + 2 * b, 'font-size': fs, class: p.punts ? 'pt-punts' : 'pt-model', 'font-weight': pes }, p.t);
-      svg.append(el);
-      x += AT.lletra.amplada(p.t, fs, 300);
-    });
+    svg.append(s('text', { x: opts.x || 3, y: y0 + 2 * b, 'font-size': fs, class: 'pt-model' }, parts.map(p => p.t).join('')));
     return svg;
   }
   AT.pautaTitol = pautaTitol;
@@ -85,10 +82,9 @@ window.AT = window.AT || {};
     const compte = id => fitxes.filter(f => f.curs === id).length;
     return h('div', { class: 'vista vista-inici' },
       h('section', { class: 'portada' },
-        h('div', { class: 'portada-pauta' },
-          pautaTitol([{ t: 'Art del ' }, { t: 'traç', punts: true }], { franja: 10, amplada: 200 })),
-        h('h1', { class: 'sr' }, 'Art del traç'),
-        h('p', { class: 'portada-text' }, 'Prepara les fitxes de cal·ligrafia i de grafomotricitat amb el format de l’escola, a punt per imprimir.')),
+        h('div', { class: 'portada-logo' }, AT.marca.logo({ u: 46 })),
+        h('h1', { class: 'sr' }, 'TRAÇApp'),
+        h('p', { class: 'portada-text' }, 'Les fitxes d’Art del traç, amb la lletra de l’escola: cal·ligrafia i grafomotricitat de 1r i 2n, a punt per imprimir.')),
       h('section', { class: 'seccio' },
         h('h2', { class: 'titol-seccio' }, 'Tria el curs'),
         h('div', { class: 'graella-cursos' },
@@ -232,7 +228,7 @@ window.AT = window.AT || {};
     });
     const exporta = () => {
       const blob = new Blob([AT.store.exporta()], { type: 'application/json' });
-      const a = h('a', { href: URL.createObjectURL(blob), download: 'art-del-trac-fitxes-' + new Date().toISOString().slice(0, 10) + '.json' });
+      const a = h('a', { href: URL.createObjectURL(blob), download: 'tracapp-fitxes-' + new Date().toISOString().slice(0, 10) + '.json' });
       document.body.append(a); a.click(); a.remove();
       if (AT.dinsMarc) AT.avis('En aquesta previsualització no es poden baixar fitxers.', 'error');
     };
@@ -269,7 +265,7 @@ window.AT = window.AT || {};
         h('div', { class: 'fila-botons' },
           h('button', { class: 'boto boto-perill', type: 'button', onclick: () => { confirmaTot.hidden = false; } }, 'Esborra totes les fitxes')),
         confirmaTot),
-      h('p', { class: 'meta' }, 'Art del traç · versió ' + C.versio));
+      h('p', { class: 'meta' }, 'TRAÇApp · versió ' + C.versio));
     pintaLogo();
     return v;
   };

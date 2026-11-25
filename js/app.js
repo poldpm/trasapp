@@ -1,4 +1,4 @@
-/* Art del traç — arrencada i navegació
+/* TRAÇApp — arrencada i navegació
    Cada pantalla té una adreça pròpia (#inici, #primer, #primer-caligrafia,
    #fitxa-…), així es pot fer servir el botó «enrere» del navegador. */
 (function () {
@@ -34,8 +34,9 @@
   window.addEventListener('hashchange', navega);
 
   AT.lletra.carrega().then(carregada => {
+    AT.posaMarca();
     document.documentElement.classList.remove('carregant');
-    if (!carregada) AT.avis('No s’ha pogut carregar la lletra lligada. Comprova la connexió a internet.', 'error');
+    if (!carregada) AT.avis('No s’han pogut carregar les tipografies. Comprova la connexió a internet.', 'error');
     navega();
   });
 })();
