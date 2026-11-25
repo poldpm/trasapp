@@ -187,6 +187,42 @@ window.AT = window.AT || {};
     ];
   }
 
+  /* Les files de la fitxa segueixen les lletres de dalt: cada lletra té les mateixes files
+     que la primera. Si s'afegeix una lletra, se li afegeixen; si se'n treu una, es treuen.
+     Les files que fan referència a una lletra concreta (no «1a, 2a… lletra») no es toquen. */
+  AT.sincronitzaLletres = function (fitxa, abans) {
+    const nous = fitxa.lletres;
+    const esDeLletra = b => b.tipus === 'fila' && typeof b.lletra === 'string' && b.lletra.startsWith('@');
+    const idx = b => Number(b.lletra.slice(1));
+    /* 1. renumera o treu les files segons on ha anat a parar la seva lletra */
+    fitxa.blocs = fitxa.blocs.filter(b => {
+      if (!esDeLletra(b)) return true;
+      const l = abans[idx(b)];
+      const j = nous.indexOf(l);
+      if (j < 0) return false;
+      b.lletra = '@' + j;
+      return true;
+    });
+    /* 2. model de files per lletra: les de la primera lletra que en tingui */
+    let plantilla = [];
+    for (let k = 0; k < nous.length && !plantilla.length; k++) plantilla = fitxa.blocs.filter(b => esDeLletra(b) && idx(b) === k);
+    if (!plantilla.length) plantilla = [
+      Object.assign(AT.clona(C.blocs.fila), { columnes: ['model', 'puntets'], files: 1 }),
+      Object.assign(AT.clona(C.blocs.fila), { columnes: ['punts'], files: 1 })
+    ];
+    /* 3. afegeix files a les lletres que no en tenen, just després de les files de lletres */
+    nous.forEach((l, j) => {
+      if (fitxa.blocs.some(b => esDeLletra(b) && idx(b) === j)) return;
+      const noves = plantilla.map((b, k) => Object.assign(AT.clona(b), { id: AT.uid(), lletra: '@' + j, enunciat: '' }));
+      let ultim = -1;
+      fitxa.blocs.forEach((b, i) => { if (esDeLletra(b) && idx(b) < j) ultim = i; });
+      fitxa.blocs.splice(ultim + 1, 0, ...noves);
+    });
+    /* l'enunciat va al primer bloc de lletres */
+    const primer = fitxa.blocs.find(esDeLletra);
+    if (primer && !fitxa.blocs.some(b => esDeLletra(b) && b.enunciat)) primer.enunciat = 'Ressegueix i escriu.';
+  };
+
   /* Lletres de la fitxa i mostra (només cal·ligrafia) */
   function panellLletres(fitxa, canvi, quanCanvienLletres) {
     const llista = h('div', { class: 'lletres-triades' });
@@ -194,17 +230,23 @@ window.AT = window.AT || {};
     const pinta = () => {
       llista.replaceChildren(...(fitxa.lletres.length
         ? fitxa.lletres.map((l, i) => h('span', { class: 'xip-lletra' }, h('span', { class: 'xip-num' }, String(i + 1)), miniLletra(l),
-          h('button', { type: 'button', class: 'boto-icona boto-mini', 'aria-label': 'Treu la ' + l, title: 'Treu', onclick: () => { fitxa.lletres.splice(i, 1); fet(); } }, icona('creu', 14))))
+          h('button', { type: 'button', class: 'boto-icona boto-mini', 'aria-label': 'Treu la ' + l, title: 'Treu', onclick: () => { const abans = fitxa.lletres.slice(); fitxa.lletres.splice(i, 1); fet(abans); } }, icona('creu', 14))))
         : [h('p', { class: 'ajuda' }, 'Tria almenys una lletra.')]));
       teclat.replaceChildren(...AT.motor.lletresDisponibles.map(l => {
         const on = fitxa.lletres.includes(l);
         return h('button', {
           type: 'button', class: 'tecla' + (on ? ' activa' : ''), 'aria-pressed': String(on), title: 'Lletra ' + l,
-          onclick: () => { if (on) fitxa.lletres.splice(fitxa.lletres.indexOf(l), 1); else if (fitxa.lletres.length < 6) fitxa.lletres.push(l); else AT.avis('Com a màxim, 6 lletres per fitxa.', 'error'); fet(); }
+          onclick: () => {
+            const abans = fitxa.lletres.slice();
+            if (on) fitxa.lletres.splice(fitxa.lletres.indexOf(l), 1);
+            else if (fitxa.lletres.length < 6) fitxa.lletres.push(l);
+            else { AT.avis('Com a màxim, 6 lletres per fitxa.', 'error'); return; }
+            fet(abans);
+          }
         }, miniLletra(l), h('span', { class: 'sr' }, l));
       }));
     };
-    const fet = () => { quanCanvienLletres(); pinta(); };
+    const fet = abans => { quanCanvienLletres(abans); pinta(); };
     pinta();
     const m = fitxa.mostra;
     return h('section', { class: 'panell-seccio' },
@@ -461,8 +503,9 @@ window.AT = window.AT || {};
     /* Capçalera de la fitxa */
     const idT = 'fitxa-titol';
     const entradaTitol = h('input', { type: 'text', id: idT, value: fitxa.titol, maxlength: 60, oninput: e => { fitxa.titol = e.target.value; fitxa.titolAuto = false; canvi(); } });
-    const quanCanvienLletres = () => {
+    const quanCanvienLletres = abans => {
       if (fitxa.titolAuto && fitxa.lletres.length) { fitxa.titol = AT.titolLletres(fitxa.lletres); entradaTitol.value = fitxa.titol; }
+      if (abans) { AT.sincronitzaLletres(fitxa, abans); oberts.clear(); pintaBlocs(); }
       canvi(true);
     };
     const panellCap = h('section', { class: 'panell-seccio' },
@@ -475,6 +518,10 @@ window.AT = window.AT || {};
     if (esCal) {
       if (!Array.isArray(fitxa.lletres)) fitxa.lletres = ['a'];
       if (!fitxa.mostra) fitxa.mostra = { visible: true, estil: 'fletxes', mida: 'gran' };
+      /* fitxes fetes abans: si hi ha lletres sense files, se'ls afegeixen ara */
+      const n = fitxa.blocs.length;
+      AT.sincronitzaLletres(fitxa, fitxa.lletres.slice());
+      if (fitxa.blocs.length !== n && !fitxa.esborrany) AT.store.desa(fitxa);
     }
     const botoAfegeix = (tipus, text) => h('button', { type: 'button', class: 'boto', onclick: () => afegeix(tipus) }, icona('mes', 18), text);
     const panell = h('aside', { class: 'panell', 'aria-label': 'Contingut de la fitxa' },
