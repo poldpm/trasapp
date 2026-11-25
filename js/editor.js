@@ -122,9 +122,13 @@ window.AT = window.AT || {};
     const pinta = () => {
       const c = AT.motor.columnesDeFila(b, fitxa, W_CONTINGUT());
       const actual = JSON.stringify(c.estats);
+      /* a les paraules no hi ha punts verd i vermell ni fletxes: aquestes opcions no hi surten */
+      const esParaula = b.tipus === 'paraula';
+      const estats = esParaula ? AT.motor.ESTATS.filter(([k]) => k !== 'punts' && k !== 'fletxes') : AT.motor.ESTATS;
+      const patrons = esParaula ? AT.motor.PATRONS.filter(([, p]) => !p.includes('punts')).concat([['Model i en blanc', ['model', 'buit']]]) : AT.motor.PATRONS;
       zona.replaceChildren(
         h('div', { class: 'patrons', role: 'group', 'aria-label': 'Combinacions ràpides' },
-          AT.motor.PATRONS.map(([nom, patro]) => {
+          patrons.map(([nom, patro]) => {
             const estats = Array.from({ length: c.n }, (_, i) => patro[Math.min(i, patro.length - 1)]);
             const actiu = JSON.stringify(estats) === actual;
             return h('button', { type: 'button', class: 'patro' + (actiu ? ' actiu' : ''), 'aria-pressed': String(actiu), onclick: () => { b.columnes = patro.slice(); canvi(); pinta(); refresca(); } }, nom);
@@ -132,7 +136,7 @@ window.AT = window.AT || {};
         h('div', { class: 'graella-columnes' },
           c.estats.map((e, i) => h('label', { class: 'columna', for: id('col' + i) },
             h('span', { class: 'columna-num' }, String(i + 1)),
-            selector(id('col' + i), AT.motor.ESTATS, e, v => { const n = c.estats.slice(); n[i] = v; b.columnes = n; canvi(); pinta(); refresca(); })))),
+            selector(id('col' + i), estats, e, v => { const n = c.estats.slice(); n[i] = v; b.columnes = n; canvi(); pinta(); refresca(); })))),
         h('p', { class: 'ajuda' }, b.tipus === 'paraula'
           ? `Hi ${c.n === 1 ? 'cap 1 vegada' : 'caben ' + c.n + ' vegades'} per fila. L’ordre continua de fila en fila i, al final, es repeteix l’últim. Les fletxes només surten a les lletres soles.`
           : (c.n === 1 ? 'Hi cap 1 columna.' : `Hi caben ${c.n} columnes.`) + (b.tipus === 'serie' ? ' «Només punts» deixa el punt verd, el vermell i la fletxa.' : ' «Només punts» deixa el punt verd, el vermell i la línia taronja si la lletra en porta.')));
@@ -251,7 +255,9 @@ window.AT = window.AT || {};
     const m = fitxa.mostra;
     return h('section', { class: 'panell-seccio' },
       h('h2', { class: 'panell-titol' }, 'Lletres de la fitxa'),
-      h('p', { class: 'ajuda' }, 'Les lletres que es treballen. Surten a la mostra de dalt i les files les fan servir.'),
+      h('p', { class: 'ajuda' }, fitxa.sincronitza === false
+        ? 'Aquestes lletres només surten a la mostra de dalt, si l’actives. No creen files per copiar-les.'
+        : 'Les lletres que es treballen. Surten a la mostra de dalt i cada lletra té les seves files.'),
       llista, teclat,
       h('div', { class: 'separador' }),
       h('h3', { class: 'panell-subtitol' }, 'Mostra sota la capçalera'),
@@ -505,12 +511,12 @@ window.AT = window.AT || {};
     const entradaTitol = h('input', { type: 'text', id: idT, value: fitxa.titol, maxlength: 60, oninput: e => { fitxa.titol = e.target.value; fitxa.titolAuto = false; canvi(); } });
     const quanCanvienLletres = abans => {
       if (fitxa.titolAuto && fitxa.lletres.length) { fitxa.titol = AT.titolLletres(fitxa.lletres); entradaTitol.value = fitxa.titol; }
-      if (abans) { AT.sincronitzaLletres(fitxa, abans); oberts.clear(); pintaBlocs(); }
+      if (abans && fitxa.sincronitza !== false) { AT.sincronitzaLletres(fitxa, abans); oberts.clear(); pintaBlocs(); }
       canvi(true);
     };
     const panellCap = h('section', { class: 'panell-seccio' },
       h('h2', { class: 'panell-titol' }, 'Capçalera'),
-      camp('Títol de la fitxa', entradaTitol, idT, fitxa.area === 'caligrafia' ? 'Es posa sol amb les lletres de la fitxa fins que l’escrius tu.' : null),
+      camp('Títol de la fitxa', entradaTitol, idT, fitxa.titolAuto ? 'Es posa sol amb les lletres de la fitxa fins que l’escrius tu.' : null),
       segmentat('Curs', 'fitxa-curs', [['primer', '1r'], ['segon', '2n']], fitxa.curs, v => { fitxa.curs = v; canvi(true); pintaBlocs(); actualitzaMolles(); }),
       fitxa.compost ? null : casella('fitxa-cap', 'Capçalera de l’escola (logotip, Nom i Data)', fitxa.capcalera !== false, v => { fitxa.capcalera = v; canvi(true); }));
 
@@ -519,9 +525,11 @@ window.AT = window.AT || {};
       if (!Array.isArray(fitxa.lletres)) fitxa.lletres = ['a'];
       if (!fitxa.mostra) fitxa.mostra = { visible: true, estil: 'fletxes', mida: 'gran' };
       /* fitxes fetes abans: si hi ha lletres sense files, se'ls afegeixen ara */
-      const n = fitxa.blocs.length;
-      AT.sincronitzaLletres(fitxa, fitxa.lletres.slice());
-      if (fitxa.blocs.length !== n && !fitxa.esborrany) AT.store.desa(fitxa);
+      if (fitxa.sincronitza !== false) {
+        const n = fitxa.blocs.length;
+        AT.sincronitzaLletres(fitxa, fitxa.lletres.slice());
+        if (fitxa.blocs.length !== n && !fitxa.esborrany) AT.store.desa(fitxa);
+      }
     }
     const botoAfegeix = (tipus, text) => h('button', { type: 'button', class: 'boto', onclick: () => afegeix(tipus) }, icona('mes', 18), text);
     const panell = h('aside', { class: 'panell', 'aria-label': 'Contingut de la fitxa' },

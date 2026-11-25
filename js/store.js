@@ -102,6 +102,7 @@ window.AT = window.AT || {};
         lletres: lletres || undefined,
         mostra: lletres ? Object.assign({ visible: true, estil: 'fletxes', mida: 'gran' }, base.mostra || {}) : undefined,
         compost: base.compost || undefined,
+        sincronitza: base.sincronitza === false ? false : undefined, // false: les lletres no creen files
         dades: base.dades ? AT.clona(base.dades) : undefined,
         capcalera: true,
         blocs: (base.blocs || []).map(b => Object.assign(AT.clona(AT.config.blocs[b.tipus]), b, { id: AT.uid() })),

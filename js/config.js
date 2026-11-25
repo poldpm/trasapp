@@ -65,7 +65,7 @@ AT.config = {
       tipus: 'fila', enunciat: '', lletra: '@0', columnes: ['model', 'puntets'], files: 1, mida: 'gran'
     },
     paraula: {
-      tipus: 'paraula', enunciat: '', text: '', columnes: ['model', 'puntets'], files: 1, mida: 'petita'
+      tipus: 'paraula', enunciat: '', text: '', columnes: ['model', 'puntets', 'buit'], files: 2, mida: 'petita'
     },
     grafomotricitat: {
       tipus: 'grafomotricitat', enunciat: 'Ressegueix.', forma: 'ones', mida: 'mitjana',
@@ -164,8 +164,23 @@ AT.models = {
       })
     },
     {
-      id: 'format-canva', nom: 'Format de la fitxa de Canva',
-      text: 'Sense mostra: dues lletres amb dues files cada una. Model, un repàs en gris i punts.',
+      id: 'paraules', nom: 'Paraules',
+      text: 'Només paraules per resseguir i copiar, sense files de lletres. Si vols, a dalt hi pots posar les lletres de model.',
+      crea: c => ({
+        titol: 'Paraules',
+        lletres: [c.mostres.lletra],
+        mostra: { visible: false, mida: 'mitjana' },
+        sincronitza: false,
+        blocs: [
+          { tipus: 'paraula', text: c.mostres.paraula, columnes: ['model', 'puntets', 'buit'], files: 2, mida: 'petita', enunciat: 'Ressegueix i escriu les paraules.' },
+          { tipus: 'paraula', text: 'mala', columnes: ['model', 'puntets', 'buit'], files: 2, mida: 'petita' },
+          { tipus: 'pauta', files: 'auto', mida: 'petita' }
+        ]
+      })
+    },
+    {
+      id: 'gallerani', nom: 'Model Gallerani',
+      text: 'Dues lletres amb dues files cada una: model, un repàs en gris i punts. Sense mostra a dalt.',
       crea: c => ({
         lletres: [c.mostres.lletra, c.mostres.segona],
         mostra: { visible: false },
