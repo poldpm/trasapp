@@ -1,0 +1,32 @@
+# Art del traç
+
+App web per preparar les fitxes de cal·ligrafia i grafomotricitat de 1r i 2n de primària (Vedruna Escorial Vic), amb el format de la «Plantilla fitxes» oficial i a punt per imprimir en A4.
+
+## Com s'obre
+- Doble clic a `index.html` (cal connexió a internet per carregar les tipografies).
+- O publicada a GitHub Pages: tot són fitxers estàtics, sense instal·lar res.
+
+## Com funciona
+1. **Inici**: tria el curs (1r o 2n).
+2. **Curs**: tria Cal·ligrafia o Grafomotricitat.
+3. **Models**: tria un punt de partida.
+4. **Editor**: capçalera (títol, curs), **lletres de la fitxa** i **mostra** sota la capçalera, i blocs: files de pauta (cada columna pot ser model, model amb fletxes, gris, puntets, només punts o en blanc), paraules o frase, traç i espai per dibuixar. Les files poden fer referència a «1a lletra de la fitxa», «2a lletra»…, i així tota la fitxa canvia quan canvien les lletres. La fitxa es veu a mida real a la dreta, es desa sola i s'imprimeix o es desa en PDF amb el botó granat.
+
+Les fitxes es desen al navegador de cada ordinador. A **Configuració** es puja el logotip de la capçalera i es fan còpies de seguretat (.json) per passar fitxes d'un ordinador a un altre.
+
+## Estructura
+| Fitxer | Què hi ha |
+|---|---|
+| `js/config.js` | Cursos, mides (mm) per curs, valors per defecte dels blocs i models de partida. **És el fitxer que cal tocar per ajustar l'app a l'escola.** |
+| `js/motor.js` | Pautes, lletres, formes de grafomotricitat i paginació en A4. |
+| `js/editor.js` | Editor de fitxes i impressió. |
+| `js/vistes.js` | Pantalles d'inici, curs, models, fitxes desades i configuració. |
+| `js/store.js` | Desament al navegador, exportació i importació. |
+| `css/app.css` | Estils de l'app i del full imprès. |
+| `construeix-artifact.js` | Genera una sola pàgina per a la previsualització a claude.ai. |
+
+## Pendent (properes passes)
+- Les lletres surten de `dades/lletres.json` (validades per la direcció de l’escola). Si es canvia el JSON, cal executar `node eines/genera-lletres.js`.
+- Unions entre lletres a les paraules: pendent de decisió de l'escola (ara no es dibuixen).
+- Botó «Obre a Canva»: pendent del pla de Canva de l'escola.
+- Tipografia Escolar per als enunciats: pendent del fitxer de la font.
