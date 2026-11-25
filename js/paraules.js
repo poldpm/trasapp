@@ -61,7 +61,15 @@ window.AT = window.AT || {};
         qIdx = Math.max(0, Math.min(k < 0 ? 0 : k, top));
       } else qIdx = top;                                   // m, n, v, w, x: al capdamunt del primer pujant
     }
-    return (cache[clau] = { dl, entrada, sortida, esCua, qIdx });
+    /* Quant s'estén la lletra cap a l'esquerra del punt d'entrada (per no trepitjar l'anterior) */
+    const Q = e[qIdx];
+    let minX = Infinity;
+    tr.forEach((t, i) => {
+      const pts = i === entrada ? (esCua ? [] : t.p.slice(qIdx)) : t.p;
+      pts.forEach(q => { if (q[0] < minX) minX = q[0]; });
+    });
+    const esquerra = (minX === Infinity ? Q[0] : minX) - Q[0];
+    return (cache[clau] = { dl, entrada, sortida, esCua, qIdx, esquerra });
   }
 
   function corba(P0, t0, P3, t3) {
@@ -123,14 +131,15 @@ window.AT = window.AT || {};
           let Q, tQ, g0;
           if (an.esCua) {
             Q = e[e.length - 1]; tQ = dirFinal(e);
-            g0 = Math.min(1.4, Math.max(0.5, 0.75 * (Q[0] - e[0][0])));
             tr[an.entrada] = null; // la unió substitueix la cua d'entrada
           } else {
             const c = an.qIdx;
             Q = e[c]; tQ = c > 0 ? dirFinal(e.slice(0, c + 1)) : dirInici(e);
             tr[an.entrada] = e.slice(c);
-            g0 = 0.35 + 0.25 * Math.abs(E[1] - Q[1]);
           }
+          /* Distància de la unió: la que demana el desnivell, però mai tan poca que
+             la lletra trepitgi l'anterior (la panxa de la a, el bucle de la e…) */
+          g0 = Math.max(0.2 + 0.35 * Math.abs(E[1] - Q[1]), 0.16 - an.esquerra);
           dx = E[0] + g0 - Q[0];
           unioAmb = { E, tE, Q, tQ };
         } else {
