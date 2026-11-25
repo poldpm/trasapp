@@ -34,7 +34,7 @@ window.AT = window.AT || {};
 
   const NOMS_BLOC = {
     fila: 'Fila de pauta', paraula: 'Paraules o frase', grafomotricitat: 'Traç', espai: 'Espai per dibuixar',
-    caixa: 'Caixa amb text', text: 'Text', imatge: 'Dibuix', sanefa: 'Sanefa', pauta: 'Pauta buida'
+    caixa: 'Caixa amb text', text: 'Text', imatge: 'Dibuix', sanefa: 'Sanefa', pauta: 'Pauta buida', serie: 'Sèrie de traços'
   };
   const NOM_ESTAT = Object.fromEntries(AT.motor.ESTATS);
   const W_CONTINGUT = () => C.full.amplada - C.full.marges.esquerra - C.full.marges.dreta;
@@ -57,6 +57,7 @@ window.AT = window.AT || {};
     if (b.tipus === 'text') return b.text ? '«' + b.text.split('\n')[0] + '»' : 'Sense text';
     if (b.tipus === 'sanefa') return b.modeSanefa === 'imatge' ? 'Amb un dibuixet' : (AT.formes[b.forma] || {}).nom || '';
     if (b.tipus === 'pauta') return textFiles(b.files);
+    if (b.tipus === 'serie') return `${(AT.TRACOS[b.forma] || {}).nom || ''} · ${Number(b.alcadaTraç) === 1 ? 'fins a la línia del mig' : 'fins a la línia de dalt'} · ${textFiles(b.files)}`;
     if (b.tipus === 'imatge') return (b.src ? 'Amb dibuix' : 'Sense dibuix') + ' · ' + (b.alcada === 'auto' ? 'omple el full' : b.alcada / 10 + ' cm');
     return b.alcada === 'auto' ? 'Omple el full' : b.alcada + ' mm';
   }
@@ -93,7 +94,9 @@ window.AT = window.AT || {};
         segmentat('Què hi ha a la sanefa', id('mode'), [['forma', 'Un traç'], ['imatge', 'Un dibuixet']], sf.modeSanefa || 'forma', v => { sf.modeSanefa = v; canvi(true); pinta(); }),
         sf.modeSanefa === 'imatge' ? pujaImatge(sf, 'imatge', id('img'), 'Dibuixet que es repeteix', canvi) : formes,
         segmentat('Quants en fa de model', id('model'), [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']], sf.model || 2, v => { sf.model = Number(v); canvi(true); }),
-        segmentat('La resta', id('resta'), [['puntets', sf.modeSanefa === 'imatge' ? 'Molt clara' : 'De puntets'], ['buit', 'En blanc']], sf.resta || 'puntets', v => { sf.resta = v; canvi(true); }));
+        segmentat('La resta', id('resta'), sf.modeSanefa === 'imatge'
+          ? [['puntets', 'Molt clara'], ['buit', 'En blanc']]
+          : [['referencies', 'Punts de referència'], ['puntets', 'De puntets'], ['buit', 'En blanc']], sf.resta || 'referencies', v => { sf.resta = v; canvi(true); }));
     };
     pinta();
     return zona;
@@ -132,7 +135,7 @@ window.AT = window.AT || {};
             selector(id('col' + i), AT.motor.ESTATS, e, v => { const n = c.estats.slice(); n[i] = v; b.columnes = n; canvi(); pinta(); refresca(); })))),
         h('p', { class: 'ajuda' }, b.tipus === 'paraula'
           ? `Hi ${c.n === 1 ? 'cap 1 vegada' : 'caben ' + c.n + ' vegades'} per fila. L’ordre continua de fila en fila i, al final, es repeteix l’últim. Les fletxes només surten a les lletres soles.`
-          : (c.n === 1 ? 'Hi cap 1 columna.' : `Hi caben ${c.n} columnes.`) + ' «Només punts» deixa el punt verd, el vermell i la línia taronja si la lletra en porta.'));
+          : (c.n === 1 ? 'Hi cap 1 columna.' : `Hi caben ${c.n} columnes.`) + (b.tipus === 'serie' ? ' «Només punts» deixa el punt verd, el vermell i la fletxa.' : ' «Només punts» deixa el punt verd, el vermell i la línia taronja si la lletra en porta.')));
     };
     const refresca = () => refrescadors.forEach(f => f !== pinta && f());
     refrescadors.push(pinta);
@@ -291,6 +294,21 @@ window.AT = window.AT || {};
     ];
   }
   function formSanefa(b, fitxa, canvi) { return [campsSanefa(b, 'b' + b.id, canvi)]; }
+  function formSerie(b, fitxa, canvi, refrescadors) {
+    const id = k => `b${b.id}-${k}`;
+    const formes = h('div', { class: 'graella-formes', role: 'radiogroup', 'aria-label': 'Traç' },
+      Object.entries(AT.TRACOS).map(([k, f]) => [
+        h('input', { type: 'radio', name: id('forma'), id: id('t-' + k), value: k, checked: b.forma === k, onchange: () => { b.forma = k; canvi(true); } }),
+        h('label', { for: id('t-' + k), class: 'forma' }, AT.tracos.mini(k), h('span', null, f.nom))]));
+    return [
+      h('fieldset', { class: 'camp' }, h('legend', { class: 'etiqueta' }, 'Traç'), formes,
+        h('p', { class: 'ajuda' }, 'Cada traç comença al punt verd i acaba al vermell. La fletxa taronja marca cap on s’ha d’anar, i els extrems sempre toquen una línia.')),
+      segmentat('Alçada', id('alt'), [['2', 'Fins a la línia de dalt'], ['1', 'Fins a la línia del mig']], b.alcadaTraç || 2, v => { b.alcadaTraç = Number(v); canvi(true); }),
+      editorColumnes(b, fitxa, canvi, refrescadors),
+      ...campsComuns(b, fitxa, canvi),
+      camp('Enunciat (opcional)', h('input', { type: 'text', id: id('enun'), value: b.enunciat || '', oninput: e => { b.enunciat = e.target.value; canvi(true); } }), id('enun'))
+    ];
+  }
   function formPauta(b, fitxa, canvi) {
     const id = k => `b${b.id}-${k}`;
     const mides = C.cursos[fitxa.curs].mides.caligrafia;
@@ -403,7 +421,7 @@ window.AT = window.AT || {};
       refrescadors = [];
       llistaBlocs.replaceChildren(...fitxa.blocs.map((b, i) => {
         const obert = oberts.has(b.id);
-        const form = { fila: formFila, paraula: formParaula, grafomotricitat: formGrafo, caixa: formCaixa, text: formText, imatge: formImatge, sanefa: formSanefa, pauta: formPauta }[b.tipus] || formEspai;
+        const form = { fila: formFila, paraula: formParaula, grafomotricitat: formGrafo, serie: formSerie, caixa: formCaixa, text: formText, imatge: formImatge, sanefa: formSanefa, pauta: formPauta }[b.tipus] || formEspai;
         const cos = h('div', { class: 'bloc-cos', id: 'cos-' + b.id, hidden: !obert }, obert ? form(b, fitxa, canvi, refrescadors) : null);
         const confirma = h('div', { class: 'confirma', hidden: true },
           h('span', null, 'Vols treure aquest bloc?'),
@@ -469,7 +487,7 @@ window.AT = window.AT || {};
           h('span', { class: 'etiqueta' }, 'Afegeix'),
           h('div', { class: 'fila-botons' },
             esCal ? [botoAfegeix('fila', 'Fila de pauta'), botoAfegeix('paraula', 'Paraules o frase')] : null,
-            fitxa.area === 'grafomotricitat' ? botoAfegeix('grafomotricitat', 'Traç') : [botoAfegeix('paraula', 'Paraules o frase'), botoAfegeix('pauta', 'Pauta buida')].filter(() => !esCal),
+            fitxa.area === 'grafomotricitat' ? botoAfegeix('serie', 'Sèrie de traços') : [botoAfegeix('paraula', 'Paraules o frase'), botoAfegeix('pauta', 'Pauta buida')].filter(() => !esCal),
             botoAfegeix('caixa', 'Caixa amb text'), botoAfegeix('text', 'Text'), botoAfegeix('sanefa', 'Sanefa'),
             botoAfegeix('imatge', 'Dibuix'), botoAfegeix('espai', 'Espai per dibuixar')))));
 

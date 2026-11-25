@@ -226,6 +226,8 @@ window.AT = window.AT || {};
     return out;
   }
 
+  AT.paraula.puntets = (p, posats) => puntets(p, posats);
+
   const X = x => AT.n(x * 100, 1), Y = y => AT.n((2 - y) * 100, 1);
   const cami = p => p.map((q, i) => (i ? 'L' : 'M') + X(q[0]) + ' ' + Y(q[1])).join('');
 

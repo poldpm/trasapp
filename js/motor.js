@@ -164,6 +164,7 @@ window.AT = window.AT || {};
 
   function dibuixaUnitat(un, estat, ox, y0, u) {
     const g = s('g', { transform: `translate(${AT.n(ox, 3)} ${AT.n(y0, 3)}) scale(${AT.n(u / 100, 5)})` });
+    if (un.esTraç) { g.append(AT.tracos.dibuixa(un, estat)); return g; } // traç de grafomotricitat
     if (un.tracos) { g.append(AT.paraula.dibuixa(un, estat)); return g; } // paraula o frase
     un.parts.forEach(p => {
       const e = lletraEnEstat(p.dl, estat);
@@ -176,8 +177,9 @@ window.AT = window.AT || {};
   /* Quantes columnes hi caben i quin estat té cada una */
   AT.motor.columnesDeFila = function (bloc, fitxa, W) {
     const u = mida(fitxa.curs, 'caligrafia', bloc.mida);
-    const text = bloc.tipus === 'paraula' ? (bloc.text || '') : AT.motor.lletraDeBloc(bloc, fitxa);
-    const un = bloc.tipus === 'paraula' ? AT.paraula.construeix(text) : unitat(text);
+    const esSerie = bloc.tipus === 'serie';
+    const text = bloc.tipus === 'paraula' ? (bloc.text || '') : esSerie ? (AT.TRACOS[bloc.forma] || {}).nom || '' : AT.motor.lletraDeBloc(bloc, fitxa);
+    const un = bloc.tipus === 'paraula' ? AT.paraula.construeix(text) : esSerie ? AT.tracos.unitat(bloc.forma, Number(bloc.alcadaTraç) || 2) : unitat(text);
     const inici = 8 * PX, marge = 6 * PX;
     let reduida = false, uTriada = u;
     /* Una paraula o frase que no hi cap es fa més petita fins que hi càpiga */
@@ -186,7 +188,7 @@ window.AT = window.AT || {};
     }
     const uFinal = reduida ? (W - marge - inici) / (un.dre - un.esq) : u;
     const ampleCol = (un.dre - un.esq) * uFinal;
-    const separacio = (bloc.tipus === 'paraula' ? 1.2 * uFinal : 30 * PX);
+    const separacio = bloc.tipus === 'paraula' ? 1.2 * uFinal : esSerie ? Math.max(0.95, 0.7 * (un.dre - un.esq)) * uFinal : 30 * PX;
     const n = Math.max(1, Math.floor((W - marge - inici + separacio) / (ampleCol + separacio)));
     const patro = Array.isArray(bloc.columnes) && bloc.columnes.length ? bloc.columnes : ['model', 'puntets'];
     /* A les paraules l'ordre continua de fila en fila (sovint només hi cap una paraula per fila);
@@ -218,7 +220,7 @@ window.AT = window.AT || {};
       for (let i = 0; i < n; i++) svg.append(dibuixaUnitat(un, estat(r || 0, i), inici + i * (ampleCol + separacio) - un.esq * u, y0, u));
       return svg;
     }
-    const lletra = bloc.tipus === 'paraula' ? null : c.text;
+    const lletra = bloc.tipus === 'fila' ? c.text : null;
     return { rowH, fila, avisos, solaEnPagina: lletra === 'ç', continu: true };
   };
 
@@ -289,7 +291,8 @@ window.AT = window.AT || {};
     ones: {
       nom: 'Ones', fn: (w, a) => {
         const k = reps(w, a * 1.4), p = w / k;
-        return { periode: p, tracos: [mostreja(x => ({ x, y: a / 2 - (a / 2) * Math.sin(TAU * x / p) }), 0, w, k * 40)] };
+        /* comença i acaba tocant la línia de baix; els extrems toquen les línies */
+        return { periode: p, tracos: [mostreja(x => ({ x, y: a / 2 + (a / 2) * Math.cos(TAU * x / p) }), 0, w, k * 40)] };
       }
     },
     ponts: {
@@ -330,23 +333,24 @@ window.AT = window.AT || {};
     },
     cercles: {
       nom: 'Rodones', fn: (w, a) => {
-        const r = a * 0.45, k = reps(w, a * 1.15), p = w / k;
+        const r = a / 2, k = Math.max(1, Math.floor(w / (a * 1.2))), p = w / k; // toca les dues línies
         /* com la «o»: comença a dalt a la dreta i gira cap a l'esquerra */
         return {
           periode: p, separats: true,
-          tracos: Array.from({ length: k }, (_, i) => mostreja(t => ({ x: p * (i + 0.5) + r * Math.cos(-Math.PI / 3 - t), y: a / 2 + r * Math.sin(-Math.PI / 3 - t) }), 0, -TAU * 0.98, 60))
+          tracos: Array.from({ length: k }, (_, i) => mostreja(t => ({ x: p * (i + 0.5) + r * Math.cos(-Math.PI / 2 - t), y: a / 2 + r * Math.sin(-Math.PI / 2 - t) }), 0, TAU, 72))
         };
       }
     },
     espirals: {
       nom: 'Cargols', fn: (w, a) => {
-        const r = a * 0.47, k = reps(w, a * 1.15), p = w / k, voltes = 2.6;
+        /* toca la línia de dalt, el centre cau sobre la primera línia del mig i la vora de baix sobre la segona */
+        const r = a / 3, k = Math.max(1, Math.floor(w / (a * 0.9))), p = w / k, voltes = 2.6;
         return {
           periode: p, separats: true,
           tracos: Array.from({ length: k }, (_, i) => mostreja(t => {
             const rr = r * (1 - t / (voltes * TAU));
-            return { x: p * (i + 0.5) + rr * Math.cos(-Math.PI / 2 - t), y: a / 2 + rr * Math.sin(-Math.PI / 2 - t) };
-          }, 0, voltes * TAU * 0.92, 140))
+            return { x: p * (i + 0.5) + rr * Math.cos(-Math.PI / 2 - t), y: a / 3 + rr * Math.sin(-Math.PI / 2 - t) };
+          }, 0, voltes * TAU, 140)) // acaba just al centre, sobre la línia
         };
       }
     }
@@ -396,7 +400,9 @@ window.AT = window.AT || {};
       const niv = nivellAjuda(bloc.ajuda, r, N);
       const model = (d, extra) => svg.append(s('path', Object.assign({ d, fill: 'none', stroke: NEGRE, 'stroke-width': 0.6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, extra)));
       const punts = d => svg.append(s('path', { d, fill: 'none', stroke: PUNTS, 'stroke-width': 0.85, 'stroke-dasharray': '0 2.1', 'stroke-linecap': 'round' }));
-      const inici = p => { if (bloc.puntInici) svg.append(s('circle', { cx: AT.n(p.x + x0), cy: AT.n(p.y + y0), r: 1.1, fill: NEGRE })); };
+      const R = AT.LLETRES.unitats.radi_punts_inici_final * 9, CL = AT.LLETRES.colors;
+      const inici = p => { if (bloc.puntInici) svg.append(s('circle', { cx: AT.n(p.x + x0), cy: AT.n(p.y + y0), r: R, fill: CL.verd })); };
+      const final = p => { if (bloc.puntInici) svg.append(s('circle', { cx: AT.n(p.x + x0), cy: AT.n(p.y + y0), r: R, fill: CL.vermell })); };
 
       if (dades.separats) {
         const T = dades.tracos, k = T.length;
@@ -414,6 +420,7 @@ window.AT = window.AT || {};
         model(cami(pts.slice(0, m), x0, y0));
         if (limit > m) punts(cami(pts.slice(m - 1, limit), x0, y0));
         inici(pts[0]);
+        final(pts[Math.max(m, limit) - 1]);
       }
       return svg;
     }
@@ -434,7 +441,7 @@ window.AT = window.AT || {};
   const ENTRE_BLOCS = 5;   // mm entre blocs
 
   function motorDe(bloc, fitxa, W) {
-    if (bloc.tipus === 'fila' || bloc.tipus === 'paraula') return AT.motor.fila(bloc, fitxa, W);
+    if (bloc.tipus === 'fila' || bloc.tipus === 'paraula' || bloc.tipus === 'serie') return AT.motor.fila(bloc, fitxa, W);
     if (bloc.tipus === 'grafomotricitat') return AT.motor.grafomotricitat(bloc, fitxa.curs, W);
     if (bloc.tipus === 'caixa') return AT.motor.caixa(bloc, fitxa, W);
     if (bloc.tipus === 'text') return AT.motor.text(bloc, fitxa, W);

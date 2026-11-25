@@ -12,7 +12,7 @@ window.AT = window.AT || {};
     const u = { gran: 5, mitjana: 4, petita: 3.3 }[mida] || 4;
     return AT.motor.partirLinies(lletra === 'pal' ? String(text || '').toUpperCase() : text, lletra, W() - 8, u);
   };
-  const sanefa = d => B(Object.assign({ tipus: 'sanefa', mida: 'gran', model: 2, resta: 'puntets', modeSanefa: 'forma', forma: 'merlets' }, d.sanefa || {}));
+  const sanefa = d => B(Object.assign({ tipus: 'sanefa', mida: 'gran', model: 2, resta: 'referencies', modeSanefa: 'forma', forma: 'merlets' }, d.sanefa || {}));
   const imatge = d => B({ tipus: 'imatge', src: d.imatge || null, alcada: 'auto' });
 
   AT.compostos = {

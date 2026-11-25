@@ -146,27 +146,61 @@ window.AT = window.AT || {};
         }
         return svg;
       }
+      /* El traç ocupa exactament la caixa: tots els extrems cauen sobre la vora de dalt o la de baix
+         (i els encreuaments, sobre les línies del mig), perquè l'alumne tingui referències. */
       const forma = AT.formes[bloc.forma] || AT.formes.merlets;
-      const a = alt * 0.62, w = W - 2 * pad - 2;
+      const a = alt, w = W - 2 * pad - 2;
       const d = forma.fn(w, a);
-      const x0 = pad + 1, y0 = y + (alt - a) / 2;
+      const x0 = pad + 1, y0 = y;
+      const P = q => [q.x + x0, q.y + y0];
       const cami = p => p.map((q, i) => (i ? 'L' : 'M') + AT.n(q.x + x0, 2) + ' ' + AT.n(q.y + y0, 2)).join('');
       const solid = dd => svg.append(s('path', { d: dd, fill: 'none', stroke: COL.model, 'stroke-width': 0.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
       const punts = dd => svg.append(s('path', { d: dd, fill: 'none', stroke: COL.model, 'stroke-width': 0.75, 'stroke-dasharray': '0 1.9', 'stroke-linecap': 'round' }));
+      const referencia = q => svg.append(s('circle', { cx: AT.n(q[0], 2), cy: AT.n(q[1], 2), r: 0.75, fill: COL.model }));
+      const resta = bloc.resta || 'referencies';
       if (d.separats) {
-        d.tracos.forEach((p, i) => { if (i < model) solid(cami(p)); else if (bloc.resta !== 'buit') punts(cami(p)); });
+        d.tracos.forEach((p, i) => {
+          if (i < model) solid(cami(p));
+          else if (resta === 'puntets') punts(cami(p));
+          else if (resta === 'referencies') vertexs(p, a).forEach(q => referencia(P(q)));
+        });
       } else {
         const p = d.tracos[0];
         const lim = d.periode * model;
-        const k = p.findIndex(q => q.x > lim);
-        const tall = k < 0 ? p.length : k + 1;
+        const k = p.findIndex(q => q.x > lim + 0.01);
+        const tall = k < 0 ? p.length : k;
         solid(cami(p.slice(0, tall)));
-        if (bloc.resta !== 'buit' && tall < p.length) punts(cami(p.slice(tall - 1)));
+        if (tall < p.length) {
+          if (resta === 'puntets') punts(cami(p.slice(tall - 1)));
+          else if (resta === 'referencies') vertexs(p.slice(tall - 1), a).forEach(q => referencia(P(q)));
+        }
       }
       return svg;
     }
     return { rowH, fila, avisos: [], continu: false };
   };
+
+  /* Punts de referència d'un traç: on comença, on acaba, cada canvi de direcció i
+     cada punt on toca la línia de dalt o la de baix */
+  function vertexs(p, a) {
+    const out = [];
+    const afegeix = q => { if (!out.some(r => Math.hypot(r.x - q.x, r.y - q.y) < 1.2)) out.push(q); };
+    afegeix(p[0]);
+    for (let i = 1; i < p.length - 1; i++) {
+      const v1 = [p[i].x - p[i - 1].x, p[i].y - p[i - 1].y], v2 = [p[i + 1].x - p[i].x, p[i + 1].y - p[i].y];
+      const n1 = Math.hypot(...v1), n2 = Math.hypot(...v2);
+      if (!n1 || !n2) continue;
+      const cos = (v1[0] * v2[0] + v1[1] * v2[1]) / (n1 * n2);
+      /* extrem d'una corba: punt sobre la línia on el traç gira (no els trams plans) */
+      const e = 1e-4, y0 = p[i - 1].y, y1 = p[i].y, y2 = p[i + 1].y;
+      const minim = y1 <= y0 + e && y1 <= y2 + e && (y1 < y0 - e || y1 < y2 - e) && !(Math.abs(y1 - y0) < e || Math.abs(y1 - y2) < e);
+      const maxim = y1 >= y0 - e && y1 >= y2 - e && (y1 > y0 + e || y1 > y2 + e) && !(Math.abs(y1 - y0) < e || Math.abs(y1 - y2) < e);
+      const extrem = (Math.abs(y1) < 0.05 || Math.abs(y1 - a) < 0.05) && (minim || maxim);
+      if (cos < 0.8 || extrem) afegeix(p[i]);
+    }
+    afegeix(p[p.length - 1]);
+    return out;
+  }
 
   /* ---------- Bloc pauta buida ---------- */
   AT.motor.pauta = function (bloc, fitxa, W) {

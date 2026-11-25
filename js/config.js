@@ -78,8 +78,9 @@ AT.config = {
     caixa: { tipus: 'caixa', text: '', lletra: 'lligada', estil: 'puntets', mida: 'mitjana', amplada: 'plena', pauta: true },
     text: { tipus: 'text', text: '', midaText: 14, negreta: false, alineacio: 'left' },
     imatge: { tipus: 'imatge', src: null, alcada: 'auto' },
-    sanefa: { tipus: 'sanefa', modeSanefa: 'forma', forma: 'merlets', imatge: null, model: 2, resta: 'puntets', mida: 'gran' },
-    pauta: { tipus: 'pauta', files: 2, mida: 'mitjana' }
+    sanefa: { tipus: 'sanefa', modeSanefa: 'forma', forma: 'merlets', imatge: null, model: 2, resta: 'referencies', mida: 'gran' },
+    pauta: { tipus: 'pauta', files: 2, mida: 'mitjana' },
+    serie: { tipus: 'serie', forma: 'copa', alcadaTraç: 2, enunciat: '', columnes: ['model', 'gris', 'punts'], files: 1, mida: 'gran' }
   }
 };
 
@@ -94,7 +95,7 @@ AT.models = {
       crea: (c, mes) => ({
         titol: 'Portada ' + mes.toLowerCase(), compost: 'portada',
         dades: { mes, dita: '', estil: 'puntets', imatge: null,
-          sanefa: { modeSanefa: 'forma', forma: 'merlets', model: 2, resta: 'puntets' },
+          sanefa: { modeSanefa: 'forma', forma: 'merlets', model: 2, resta: 'referencies' },
           versions: { lligada: true, pal: true, pi: true, estrella: false } }
       })
     }
@@ -106,7 +107,7 @@ AT.models = {
       crea: (c, mes) => ({
         titol: 'Dita ' + mes.toLowerCase(), compost: 'dita',
         dades: { titol: 'Dita', dita: '', estil: 'puntets', caixesBuides: 2, imatge: null,
-          sanefa: { modeSanefa: 'forma', forma: 'ones', model: 2, resta: 'puntets' },
+          sanefa: { modeSanefa: 'forma', forma: 'ones', model: 2, resta: 'referencies' },
           versions: { lligada: true, pal: true } }
       })
     }
@@ -191,27 +192,57 @@ AT.models = {
       })
     }
   ],
+  /* Grafomotricitat amb el mètode: cada traç amb punt verd, punt vermell i fletxa taronja,
+     i tots els extrems sobre una línia de la pauta. */
   grafomotricitat: [
     {
-      id: 'ones-ponts', nom: 'Ones i ponts',
-      text: 'Dos traços corbats que preparen la «u», la «n» i la «m».',
+      id: 'copes', nom: 'Traç copa',
+      text: 'Copes grans i petites: model, en gris i només els punts per fer-les sols.',
       crea: () => ({
-        titol: 'Ones i ponts',
+        titol: 'Traç copa',
         blocs: [
-          { tipus: 'grafomotricitat', forma: 'ones', files: 3 },
-          { tipus: 'grafomotricitat', forma: 'ponts' }
+          { tipus: 'serie', forma: 'copa', alcadaTraç: 2, columnes: ['model', 'gris', 'punts'], files: 1, mida: 'gran', enunciat: 'Ressegueix i fes les copes.' },
+          { tipus: 'serie', forma: 'copa', alcadaTraç: 2, columnes: ['punts'], files: 1, mida: 'gran' },
+          { tipus: 'serie', forma: 'copa', alcadaTraç: 1, columnes: ['model', 'gris', 'gris', 'punts'], files: 1, mida: 'mitjana' },
+          { tipus: 'serie', forma: 'copa', alcadaTraç: 1, columnes: ['punts'], files: 'auto', mida: 'mitjana' }
         ]
       })
     },
     {
-      id: 'zigazaga', nom: 'Ziga-zaga',
-      text: 'Traç recte amb canvis de direcció, per a la «v» i la «w».',
-      crea: () => ({ titol: 'Ziga-zaga', blocs: [{ tipus: 'grafomotricitat', forma: 'zigazaga' }] })
+      id: 'serie', nom: 'Sèrie d’un traç',
+      text: 'Tria el traç (pont, ona, punxa, bucle, rodona…) i com es veu cada columna.',
+      crea: () => ({
+        titol: 'Grafomotricitat',
+        blocs: [
+          { tipus: 'serie', forma: 'pont', alcadaTraç: 2, columnes: ['model', 'gris', 'punts'], files: 1, mida: 'gran', enunciat: 'Ressegueix i continua.' },
+          { tipus: 'serie', forma: 'pont', alcadaTraç: 2, columnes: ['punts'], files: 'auto', mida: 'gran' }
+        ]
+      })
     },
     {
-      id: 'bucles', nom: 'Bucles',
-      text: 'Bucles enllaçats que preparen la «l», la «e» i la lletra lligada.',
-      crea: () => ({ titol: 'Bucles', blocs: [{ tipus: 'grafomotricitat', forma: 'bucles', mida: 'gran' }] })
+      id: 'dos-tracos', nom: 'Dos traços',
+      text: 'Dos traços que es treballen junts, per exemple la punxa i la vall.',
+      crea: () => ({
+        titol: 'Punxes i valls',
+        blocs: [
+          { tipus: 'serie', forma: 'punxa', alcadaTraç: 2, columnes: ['model', 'gris', 'punts'], files: 1, mida: 'mitjana', enunciat: 'Ressegueix i continua.' },
+          { tipus: 'serie', forma: 'punxa', alcadaTraç: 2, columnes: ['punts'], files: 1, mida: 'mitjana' },
+          { tipus: 'serie', forma: 'vall', alcadaTraç: 2, columnes: ['model', 'gris', 'punts'], files: 1, mida: 'mitjana' },
+          { tipus: 'serie', forma: 'vall', alcadaTraç: 2, columnes: ['punts'], files: 'auto', mida: 'mitjana' }
+        ]
+      })
+    },
+    {
+      id: 'sanefes', nom: 'Sanefes',
+      text: 'Sanefes per continuar: comencen fetes i tenen punts de referència a cada canvi de direcció.',
+      crea: () => ({
+        titol: 'Sanefes',
+        blocs: [
+          { tipus: 'text', text: 'Continua les sanefes.', midaText: 14, negreta: true },
+          { tipus: 'sanefa', forma: 'merlets' }, { tipus: 'sanefa', forma: 'zigazaga' }, { tipus: 'sanefa', forma: 'ones' },
+          { tipus: 'sanefa', forma: 'ponts' }, { tipus: 'sanefa', forma: 'bucles' }, { tipus: 'sanefa', forma: 'cercles' }
+        ]
+      })
     },
     {
       id: 'cami', nom: 'Camí amb dibuixos',
