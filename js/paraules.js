@@ -32,6 +32,8 @@ window.AT = window.AT || {};
   const dirInici = p => norm([p[Math.min(6, p.length - 1)][0] - p[0][0], p[Math.min(6, p.length - 1)][1] - p[0][1]]);
   const dirFinal = p => { const n = p.length; const q = p[Math.max(0, n - 7)]; return norm([p[n - 1][0] - q[0], p[n - 1][1] - q[1]]); };
 
+  const ENTRADA_BUCLE = { alt: 1.0, baix: 0.45 };
+
   /* Anàlisi d'una lletra: quin traç és l'entrada i quin la sortida (pels punts verd i vermell) */
   const cache = {};
   function analitza(clau) {
@@ -57,8 +59,13 @@ window.AT = window.AT || {};
       let top = 0;
       while (top + 1 < e.length && e[top + 1][1] >= e[top][1] - 0.005) top++;
       const tornaEnrere = e[Math.min(top + 12, e.length - 1)][0] < e[top][0];
-      if (tornaEnrere) {                                   // bucles (b, e, f, h, l): a mitja alçada de l'entrada
-        const k = e.findIndex(q => q[1] >= 0.45);
+      if (tornaEnrere) {
+        /* Bucles. Les lletres amb bucle alt (b, f, h, l) s'entren a l'alçada de la línia del mig (y = 1),
+           on el seu traç d'entrada ja puja cap al bucle: així la unió sempre puja, també des de les
+           lletres que acaben a dalt (o, v, w, b…), sense fer ondulacions. La e (bucle petit) s'entra
+           a mitja alçada, perquè més amunt perdria el bucle. */
+        const llindar = ENTRADA_BUCLE[maxY > 1.5 ? 'alt' : 'baix'];
+        const k = e.findIndex(q => q[1] >= llindar);
         qIdx = Math.max(0, Math.min(k < 0 ? 0 : k, top));
       } else qIdx = top;                                   // m, n, v, w, x: al capdamunt del primer pujant
     }
@@ -98,8 +105,9 @@ window.AT = window.AT || {};
 
   /* Construeix la geometria d'un text */
   AT.paraula = {};
+  AT.paraula.buidaMemoria = () => Object.keys(cache).forEach(k => delete cache[k]);
   AT.paraula.construeix = function (text) {
-    const g = { tracos: [], punts: [], taronja: [], verds: [], vermells: [], glifs: [], noDisponibles: [] };
+    const g = { tracos: [], punts: [], taronja: [], verds: [], vermells: [], glifs: [], noDisponibles: [], unions: [] };
     let cursor = 0;        // on pot començar el següent element
     let anterior = null;   // última lletra de la paraula en curs: { traç de sortida, extrem dret }
     let dreta = 0;
@@ -160,6 +168,7 @@ window.AT = window.AT || {};
           const { E, tE } = unioAmb;
           const Q = [unioAmb.Q[0] + dx, unioAmb.Q[1]];
           const unio = corba(E, tE, Q, unioAmb.tQ);
+          g.unions.push({ E, Q, n: unio.length, abans: anterior.traç.length });
           /* el traç de sortida anterior continua amb la unió (i amb l'entrada retallada, si n'hi ha) */
           const cont = anterior.traç;
           cont.push(...unio, Q);
