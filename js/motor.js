@@ -45,9 +45,8 @@ window.AT = window.AT || {};
   const COL = L.colors; // model, repas, verd, vermell, taronja, fletxa
   const RADI_PUNT = L.unitats.radi_punts_inici_final * 100;
 
-  /* Clau de dades d'una lletra (la q segons la configuració) */
+  /* Clau de dades d'una lletra. Només hi ha una q (la decidida el 26-11-2026). */
   AT.motor.clauLletra = function (lletra) {
-    if (lletra === 'q') return AT.config.versioQ === 'q_cua' ? 'q_cua' : 'q';
     return L.lletres[lletra] ? lletra : 'a';
   };
   AT.motor.lletresDisponibles = 'a b c ç d e f g h i j k l m n o p q r s t u v w x y z'.split(' ');
@@ -132,10 +131,11 @@ window.AT = window.AT || {};
     for (const ch of text) {
       if (ch === ' ') { if (prev) x = prev.dx + prev.dl.amplada_amb_punts.dreta + ENTRE_PARAULES; prev = null; continue; }
       const c = ch.toLowerCase();
-      if (!L.lletres[c] || c === 'q_cua') { noDisponibles.push(ch); continue; }
+      if (!L.lletres[c]) { noDisponibles.push(ch); continue; }
       const dl = L.lletres[AT.motor.clauLletra(c)];
       let dx;
-      if (prev) dx = prev.dx + prev.dl.punt_vermell[0] + ENTRE_LLETRES - dl.punt_verd[0];
+      if (prev && prev.dl.unio_amb_la_seguent === 'cap') dx = prev.dx + prev.dl.limits_lletra.xmax + 0.3 - dl.punt_verd[0]; // després de la q
+      else if (prev) dx = prev.dx + prev.dl.punt_vermell[0] + ENTRE_LLETRES - dl.punt_verd[0];
       else if (x !== null) dx = x - dl.amplada_amb_punts.esquerra;
       else dx = 0;
       const p = { dl, dx, c };
@@ -204,7 +204,14 @@ window.AT = window.AT || {};
     const c = AT.motor.columnesDeFila(bloc, fitxa, W);
     const { u, un, ampleCol, inici, separacio, marge, n, estat } = c;
     const aire = Math.max(4, 0.4 * u);
-    const rowH = 3 * u + aire;
+    /* La q acaba amb el punt vermell sota la línia de baix (y = −1,2): s'hi afegeix aire a sota
+       perquè el punt no toqui la fila següent. */
+    let baixa = 0;
+    if (bloc.tipus === 'fila' && L.lletres[c.text]) {
+      const dl = L.lletres[c.text], rp = L.unitats.radi_punts_inici_final;
+      baixa = Math.max(0, -Math.min(dl.punt_verd[1], dl.punt_vermell[1]) + rp - 1);
+    }
+    const rowH = 3 * u + aire + (baixa ? baixa * u + 1 : 0);
     const y0 = aire / 2;
     const avisos = [];
     if (bloc.tipus === 'paraula') {

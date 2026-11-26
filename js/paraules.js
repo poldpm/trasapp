@@ -1,9 +1,10 @@
 /* TRAÇApp — paraules i frases amb la lletra lligada de l'escola
    - Les lletres surten dels traços validats (dades/lletres.json), sense tocar-los.
-   - Unions: la mateixa lògica que la «qu» de la comparativa de l'escola. Si la lletra següent
+   - Unions: si la lletra següent
      comença amb una cua d'entrada (un traç a part que puja des de baix), la unió la substitueix:
      va del final de la lletra anterior fins on acabava aquella cua. Si la lletra és d'un sol traç
      (e, l…), la unió arriba al punt on la seva entrada fa la mateixa alçada que la sortida anterior.
+   - La q no s'uneix amb la lletra següent («unio_amb_la_seguent»: «cap» al JSON): la u va al costat.
    - Els punts verd i vermell són només per a les lletres soles: a les paraules i frases no hi van.
    - Cada lletra és sempre igual: la unió hi entra per un punt fix de la lletra, que no depèn de l'anterior.
    - Accents: un traç curt a sobre (à è é í ò ó ú); dièresi: dos punts (ï ü).
@@ -120,7 +121,14 @@ window.AT = window.AT || {};
       }
       let base = ch, accent = null;
       if (ACCENTS[ch]) [base, accent] = ACCENTS[ch];
-      if (base === 'q' || L.lletres[base] && base !== 'q_cua') {
+      if (L.lletres[base]) {
+        /* La q no s'uneix amb la lletra següent (norma de l'escola, 26-11-2026): la u es posa al costat,
+           amb la seva entrada pròpia, 0,3 a la dreta del final del pal horitzontal de la q. */
+        if (anterior && anterior.senseUnio) {
+          const fi = anterior.fiDreta;
+          tancaParaula();
+          cursor = fi + 0.3 - (L.lletres[base].punt_verd[0] - L.lletres[base].amplada_amb_punts.esquerra);
+        }
         const an = analitza(AT.motor.clauLletra(base));
         const tr = an.dl.tracos.filter(t => t.tipus === 'traç').map(t => t.p.map(q => q.slice()));
         let dx, unioAmb = null;
@@ -172,7 +180,9 @@ window.AT = window.AT || {};
         const sortida = mogut[an.sortida];
         anterior = {
           traç: sortida, final: sortida[sortida.length - 1], dir: dirFinal(sortida),
-          vermell: [an.dl.punt_vermell[0] + dx, an.dl.punt_vermell[1]]
+          vermell: [an.dl.punt_vermell[0] + dx, an.dl.punt_vermell[1]],
+          senseUnio: an.dl.unio_amb_la_seguent === 'cap',
+          fiDreta: Math.max(...mogut.filter(Boolean).flat().map(q => q[0]))
         };
         dreta = Math.max(dreta, an.dl.amplada_amb_punts.dreta + dx);
         continue;

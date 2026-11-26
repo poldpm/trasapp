@@ -5,7 +5,7 @@ window.AT = window.AT || {};
 
 (function () {
   const CLAU = 'artdeltrac.v1';
-  let dades = { fitxes: [], config: { logo: null, titolDefecte: 'Art del traç', versioQ: 'q' } };
+  let dades = { fitxes: [], config: { logo: null, titolDefecte: 'Art del traç' } };
   let persistent = true;
 
   function llegeix() {

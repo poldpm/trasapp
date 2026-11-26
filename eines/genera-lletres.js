@@ -11,6 +11,8 @@ const lletres = {};
 for (const [k, v] of Object.entries(d.lletres)) {
   lletres[k] = {};
   CAMPS.forEach(c => { if (!(c in v)) throw new Error(`Falta ${c} a la lletra ${k}`); lletres[k][c] = v[c]; });
+  /* «cap» (només la q): no s'uneix amb la lletra següent */
+  lletres[k].unio_amb_la_seguent = v.unio_amb_la_seguent || 'normal';
   /* Traços (polilínies ja calculades al JSON) per poder unir lletres dins d'una paraula */
   lletres[k].tracos = v.tracos.map(t => t.tipus === 'punt'
     ? { tipus: 'punt', x: t.x, y: t.y }
