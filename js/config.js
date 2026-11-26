@@ -73,7 +73,7 @@ AT.config = {
     },
     caixa: { tipus: 'caixa', text: '', lletra: 'lligada', estil: 'puntets', mida: 'mitjana', amplada: 'plena', pauta: true },
     text: { tipus: 'text', text: '', midaText: 14, negreta: false, alineacio: 'left' },
-    imatge: { tipus: 'imatge', src: null, alcada: 'auto' },
+    imatge: { tipus: 'imatge', src: null, alcada: 'auto', mida: 'gran' },
     sanefa: { tipus: 'sanefa', modeSanefa: 'forma', forma: 'merlets', imatge: null, model: 2, resta: 'referencies', mida: 'gran' },
     pauta: { tipus: 'pauta', files: 2, mida: 'mitjana' },
     serie: { tipus: 'serie', forma: 'copa', alcadaTraç: 2, enunciat: '', columnes: ['model', 'gris', 'punts'], files: 1, mida: 'gran' },

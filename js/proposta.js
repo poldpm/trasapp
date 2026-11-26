@@ -22,7 +22,7 @@ window.AT = window.AT || {};
   });
   const full = (titol, src, o = {}) => ({ area: 'extres', titol, capcalera: o.capcalera !== false, blocs: [{ tipus: 'imatge', src, alcada: 'auto' }] });
   const caixaBuida = (o = {}) => Object.assign({ tipus: 'caixa', text: '', lletra: 'lligada', estil: 'buit', mida: 'gran', amplada: 'plena' }, o);
-  const img = (src, alcada = 'auto') => ({ tipus: 'imatge', src, alcada });
+  const img = (src, alcada = 'auto', mida = 'gran') => ({ tipus: 'imatge', src, alcada, mida });
   const sanefaImg = (clau, model = 1) => ({ tipus: 'sanefa', modeSanefa: 'imatge', imatge: 'img:' + clau, model, resta: 'buit', mida: 'gran' });
 
   /* Fitxa de lletres: per a cada lletra, una fila amb model, repàs en gris i punts, i una fila només amb punts */
@@ -206,7 +206,7 @@ window.AT = window.AT || {};
     },
     segon: {
       setembre: () => [
-        portada2n('Setembre', [caixaBuida(), img('img:2n-set-garlanda', 42), img('img:2n-set-arbres'), { tipus: 'sanefa', forma: 'merlets', model: 2, resta: 'buit', mida: 'gran' }]),
+        portada2n('Setembre', [caixaBuida(), img('img:2n-set-garlanda', 62), img('img:2n-set-arbres'), { tipus: 'sanefa', forma: 'merlets', model: 2, resta: 'buit', mida: 'gran' }]),
         dita('Setembre', 'Del setembre a la tardor, torna la calor.', 2, { forma: 'serra' })
       ],
       octubre: () => [
@@ -214,7 +214,7 @@ window.AT = window.AT || {};
         full('Extra octubre', 'img:2n-oct-extra')
       ],
       novembre: () => [
-        portada2n('Novembre', [caixaBuida({ amplada: 'centrada' }), img('img:2n-nov-pages'), sanefaImg('fulles')]),
+        portada2n('Novembre', [caixaBuida({ amplada: 'centrada' }), img('img:2n-nov-pages', 'auto', 'mitjana'), sanefaImg('fulles')]),
         dita('Novembre', 'Qui pel novembre no ha sembrat, que no sembri, que ja és tard!', 3, { modeSanefa: 'imatge', imatge: 'img:fulles', model: 1, resta: 'buit' }),
         full('Extra 1 novembre', 'img:2n-nov-mandala'),
         full('Extra 2 novembre', 'img:2n-nov-extra')
@@ -337,6 +337,8 @@ window.AT = window.AT || {};
   /* Setembre, octubre i novembre no són «Dossier TRAÇApp»: són els dossiers de l'escola, que surten
      ja posats al dossier de cada mes com si les mestres els haguessin fet amb l'app. */
   const MESOS_ESCOLA = ['setembre', 'octubre', 'novembre'];
+  /* Puja aquest número quan canviïn aquests dossiers: les fitxes posades que ningú no ha tocat s'actualitzen */
+  AT.dossiersEscolaVersio = 2;
   AT.dossiersEscola = {};
   Object.keys(AT.dossiersApp).forEach(curs => {
     AT.dossiersEscola[curs] = {};

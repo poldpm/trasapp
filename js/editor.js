@@ -64,7 +64,7 @@ window.AT = window.AT || {};
     if (b.tipus === 'copia') return `${b.graella === 'punts' ? 'Punts' : 'Quadrícula'} · ${(b.figures || []).slice(0, Number(b.parells) === 2 ? 2 : 1).map(f => typeof f === 'object' ? 'pròpia' : ((AT.detrac.FIGURES[f] || {}).nom || '').toLowerCase()).join(', ')}`;
     if (b.tipus === 'estret') return `${{ recte: 'Recte', ona: 'Ona', zigazaga: 'Ziga-zaga' }[b.forma] || ''} · ${textFiles(b.files)}`;
     if (b.tipus === 'serie') return `${(AT.TRACOS[b.forma] || {}).nom || ''} · ${Number(b.alcadaTraç) === 1 ? 'fins a la línia del mig' : 'fins a la línia de dalt'} · ${textFiles(b.files)}`;
-    if (b.tipus === 'imatge') return (b.src ? 'Amb dibuix' : 'Sense dibuix') + ' · ' + (b.alcada === 'auto' ? 'omple el full' : b.alcada / 10 + ' cm');
+    if (b.tipus === 'imatge') return (b.src ? 'Dibuix ' + ({ gran: 'gran', mitjana: 'mitjà', petita: 'petit' }[b.mida] || 'gran') : 'Sense dibuix') + ' · ' + (b.alcada === 'auto' ? 'omple el full' : b.alcada / 10 + ' cm');
     return b.alcada === 'auto' ? 'Omple el full' : b.alcada + ' mm';
   }
 
@@ -353,12 +353,14 @@ window.AT = window.AT || {};
       casella(id('neg'), 'En negreta', b.negreta, v => { b.negreta = v; canvi(); })
     ];
   }
+  const MIDES_DIBUIX = [['gran', 'Gran'], ['mitjana', 'Mitjana'], ['petita', 'Petita']];
   const opcionsAlcada = [['auto', 'Omple el full'], ['40', '4 cm'], ['60', '6 cm'], ['80', '8 cm'], ['100', '10 cm'], ['130', '13 cm'], ['160', '16 cm'], ['200', '20 cm']];
   function formImatge(b, fitxa, canvi) {
     const id = k => `b${b.id}-${k}`;
     return [
       pujaImatge(b, 'src', id('img'), 'Dibuix (es veu sencer, sense retallar)', canvi),
-      camp('Alçada', selector(id('alt'), opcionsAlcada, b.alcada, v => { b.alcada = v === 'auto' ? 'auto' : Number(v); canvi(true); }), id('alt'))
+      segmentat('Mida del dibuix', id('mida'), MIDES_DIBUIX, b.mida || 'gran', v => { b.mida = v; canvi(true); }),
+      camp('Espai que ocupa', selector(id('alt'), opcionsAlcada, b.alcada, v => { b.alcada = v === 'auto' ? 'auto' : Number(v); canvi(true); }), id('alt'))
     ];
   }
   function formSanefa(b, fitxa, canvi) { return [campsSanefa(b, 'b' + b.id, canvi)]; }
@@ -560,6 +562,7 @@ window.AT = window.AT || {};
       h('div', { class: 'separador' }),
       h('h3', { class: 'panell-subtitol' }, 'Dibuix'),
       pujaImatge(d, 'imatge', 'c-img', esPortada ? 'Dibuix de la portada' : 'Dibuix (opcional)', canvi),
+      segmentat('Mida del dibuix', 'c-mida', MIDES_DIBUIX, d.midaImatge || 'gran', v => { d.midaImatge = v; canvi(true); }),
       h('div', { class: 'separador' }),
       h('h3', { class: 'panell-subtitol' }, 'Sanefa del final'),
       campsSanefa(d.sanefa = d.sanefa || {}, 'c-sf', canvi));

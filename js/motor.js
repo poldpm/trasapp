@@ -567,6 +567,10 @@ window.AT = window.AT || {};
     return { pagines, motors, W, avisos, ocupacio };
   };
 
+  /* Mida d'un dibuix dins del seu espai: gran l'omple; mitjana i petita en deixen aire al voltant */
+  const PERCENT_DIBUIX = { gran: 100, mitjana: 68, petita: 45 };
+  const midaDibuix = m => { const p = (PERCENT_DIBUIX[m] || 100) + '%'; return { width: p, height: p }; };
+
   /* ---------- Fulls (DOM) ---------- */
   function fullsSimple(fitxa, primerNum) {
     const res = AT.motor.pagina(fitxa);
@@ -594,7 +598,7 @@ window.AT = window.AT || {};
           cos.append(h('div', { class: 'espai-dibuix', style: { height: it.alt + 'mm' } }));
         } else if (it.tipus === 'imatge') {
           cos.append(h('div', { class: 'imatge-bloc', style: { height: it.alt + 'mm' } },
-            it.bloc.src ? h('img', { src: AT.srcImatge(it.bloc.src), alt: '' }) : h('span', { class: 'nomes-pantalla imatge-buida-full' }, 'Aquí anirà el dibuix. Puja’l des de l’editor.')));
+            it.bloc.src ? h('img', { src: AT.srcImatge(it.bloc.src), alt: '', style: midaDibuix(it.bloc.mida) }) : h('span', { class: 'nomes-pantalla imatge-buida-full' }, 'Aquí anirà el dibuix. Puja’l des de l’editor.')));
         }
       });
       full.append(cos);

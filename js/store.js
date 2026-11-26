@@ -142,10 +142,27 @@ window.AT = window.AT || {};
       Object.keys(AT.dossiersEscola).forEach(curs => Object.keys(AT.dossiersEscola[curs]).forEach(mes => {
         const k = curs + '-' + mes;
         if (fets[k]) return;
-        if (!this.dossier(curs, mes).length) dades.fitxes.push(...AT.dossierEscola(curs, mes));
+        if (!this.dossier(curs, mes).length) { dades.fitxes.push(...AT.dossierEscola(curs, mes)); dades.config.dossiersEscolaVersio = AT.dossiersEscolaVersio; }
         fets[k] = true; canvi = true;
       }));
       dades.config.dossiersEscola = fets;
+      /* Versió nova d'aquests dossiers: s'actualitzen les fitxes que encara són tal com es van posar
+         (mai editades: «modificat» no és posterior a «creat»). Les que s'han tocat es respecten. */
+      if ((dades.config.dossiersEscolaVersio || 1) < AT.dossiersEscolaVersio) {
+        Object.keys(AT.dossiersEscola).forEach(curs => Object.keys(AT.dossiersEscola[curs]).forEach(mes => {
+          const noves = AT.dossierEscola(curs, mes);
+          this.dossier(curs, mes).forEach(f => {
+            if (f.modificat > f.creat) return;
+            const n = noves.find(x => x.titol === f.titol);
+            if (!n) return;
+            ['area', 'lletres', 'mostra', 'sincronitza', 'compost', 'dades', 'capcalera', 'blocs'].forEach(k => {
+              if (n[k] === undefined) delete f[k]; else f[k] = n[k];
+            });
+          });
+        }));
+        dades.config.dossiersEscolaVersio = AT.dossiersEscolaVersio;
+        canvi = true;
+      }
       if (canvi) escriu();
     },
 
