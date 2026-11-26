@@ -130,6 +130,25 @@ window.AT = window.AT || {};
       escriu();
     },
 
+    /* Dossiers de setembre a novembre de l'escola: es posen una sola vegada a cada navegador, al dossier
+       normal del mes, si encara és buit. Si després s'esborren fitxes, no tornen a aparèixer. */
+    sembraDossiersEscola() {
+      const fets = dades.config.dossiersEscola || {};
+      let canvi = false;
+      /* fitxes d'una versió anterior, quan aquests mesos eren «Dossier TRAÇApp» */
+      const abans = dades.fitxes.length;
+      dades.fitxes = dades.fitxes.filter(f => !(f.proposta && AT.dossiersEscola[f.curs] && AT.dossiersEscola[f.curs][f.mes]));
+      if (dades.fitxes.length !== abans) canvi = true;
+      Object.keys(AT.dossiersEscola).forEach(curs => Object.keys(AT.dossiersEscola[curs]).forEach(mes => {
+        const k = curs + '-' + mes;
+        if (fets[k]) return;
+        if (!this.dossier(curs, mes).length) dades.fitxes.push(...AT.dossierEscola(curs, mes));
+        fets[k] = true; canvi = true;
+      }));
+      dades.config.dossiersEscola = fets;
+      if (canvi) escriu();
+    },
+
     /* «Dossier TRAÇApp»: el dossier ja fet de cada mes. Es crea la primera vegada que s'obre
        i després es desa com qualsevol fitxa, amb els canvis que hi facin les mestres. */
     proposta(curs, mes) {

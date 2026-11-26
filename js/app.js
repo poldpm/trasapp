@@ -39,6 +39,7 @@
 
   AT.lletra.carrega().then(carregada => {
     AT.posaMarca();
+    try { AT.store.sembraDossiersEscola(); } catch (e) { console.error(e); }
     document.documentElement.classList.remove('carregant');
     if (!carregada) AT.avis('No s’han pogut carregar les tipografies. Comprova la connexió a internet.', 'error');
     navega();

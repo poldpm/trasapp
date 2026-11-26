@@ -6,7 +6,6 @@ window.AT = window.AT || {};
 (function () {
   const { h, icona } = AT;
   const C = AT.config;
-  const REALS = ['setembre', 'octubre', 'novembre'];
 
   AT.hiHaDossierApp = (curs, mes) => !!(AT.dossiersApp[curs] && AT.dossiersApp[curs][mes]);
 
@@ -101,9 +100,7 @@ window.AT = window.AT || {};
         AT.marca.icona(44),
         h('div', null,
           h('h2', { id: titolId, class: 'cap-app-titol' }, `Dossier TRAÇApp · ${nomMes} · ${c.curt}`),
-          h('p', { class: 'cap-app-sub' }, REALS.includes(mes)
-            ? 'El dossier que vau fer servir aquest mes, refet amb TRAÇApp. Revisa’l, canvia el que vulguis i imprimeix-lo.'
-            : 'Un dossier preparat per TRAÇApp per a aquest mes. Revisa’l fitxa per fitxa, canvia el que vulguis i imprimeix-lo.'),
+          h('p', { class: 'cap-app-sub' }, 'Un dossier preparat per TRAÇApp per a aquest mes. Revisa’l fitxa per fitxa, canvia el que vulguis i imprimeix-lo.'),
           h('p', { class: 'cap-app-nota' }, 'Els canvis es desen sols. Si no el vols fer servir, tanca’l i continua amb el teu dossier com sempre.'))),
       h('div', { class: 'cap-app-accions' },
         h('button', { type: 'button', class: 'boto boto-primari', onclick: imprimeix }, icona('impressora', 18), 'Imprimeix el dossier'),

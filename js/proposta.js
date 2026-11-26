@@ -315,13 +315,11 @@ window.AT = window.AT || {};
   }
 
   /* Converteix les definicions en fitxes completes (encara sense desar) */
-  AT.dossierApp = function (curs, mes) {
-    const def = (AT.dossiersApp[curs] || {})[mes];
-    if (!def) return [];
+  function construeix(def, curs, mes, proposta) {
     const ara = Date.now();
     return def().map((d, i) => {
       const f = {
-        id: AT.uid(), curs, mes, area: d.area, ordre: i + 1, proposta: true,
+        id: AT.uid(), curs, mes, area: d.area, ordre: i + 1, proposta: proposta || undefined,
         titol: d.titol || (d.lletres ? AT.titolLletres(d.lletres) : 'Fitxa'),
         titolAuto: !d.titol && !!d.lletres,
         lletres: d.lletres, mostra: d.mostra, sincronitza: d.sincronitza,
@@ -334,5 +332,23 @@ window.AT = window.AT || {};
       ajusta(f);
       return f;
     });
+  }
+
+  /* Setembre, octubre i novembre no són «Dossier TRAÇApp»: són els dossiers de l'escola, que surten
+     ja posats al dossier de cada mes com si les mestres els haguessin fet amb l'app. */
+  const MESOS_ESCOLA = ['setembre', 'octubre', 'novembre'];
+  AT.dossiersEscola = {};
+  Object.keys(AT.dossiersApp).forEach(curs => {
+    AT.dossiersEscola[curs] = {};
+    MESOS_ESCOLA.forEach(m => { AT.dossiersEscola[curs][m] = AT.dossiersApp[curs][m]; delete AT.dossiersApp[curs][m]; });
+  });
+
+  AT.dossierApp = function (curs, mes) {
+    const def = (AT.dossiersApp[curs] || {})[mes];
+    return def ? construeix(def, curs, mes, true) : [];
+  };
+  AT.dossierEscola = function (curs, mes) {
+    const def = (AT.dossiersEscola[curs] || {})[mes];
+    return def ? construeix(def, curs, mes, false) : [];
   };
 })();
